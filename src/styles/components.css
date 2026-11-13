@@ -1,116 +1,35 @@
-/* Компоненты будут добавлены постепенно */
-
-.habit-card {
-  background: var(--card-grouped);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: var(--hairline);
-}
-
-.habit-card-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.habit-icon {
-  font-size: 32px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.habit-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.habit-title {
-  font-size: 1.0625rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.habit-trigger {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
-
-.streak-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: var(--emerald-glow);
-  color: var(--emerald);
-  border-radius: 8px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  text-align: center;
-  color: var(--text-secondary);
-  gap: 16px;
-}
-
-.empty-state-icon {
-  font-size: 64px;
-  opacity: 0.5;
-}
-
-.empty-state-text {
-  font-size: 0.9375rem;
-  line-height: 1.5;
-}
-
-.habit-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.habit-action-btn {
-  flex: 1;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  background: var(--card-raised);
-  color: var(--text-primary);
-  transition: transform 0.2s var(--spring), opacity 0.2s;
-}
-
-.habit-action-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.habit-action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.habit-action-btn.primary {
-  background: var(--emerald);
-  color: #000;
-}
-
-.habit-action-btn.danger {
-  background: var(--card-raised);
-  color: var(--coral);
-}
-
+/* ... (предыдущие стили) ... */
 .habit-completed {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: center;
+}
+
+.analytics-view { padding: 16px; }
+
+.metric-card {
+  background: var(--card-grouped);
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.metric-value { font-size: 2rem; font-weight: 700; color: var(--emerald); }
+.metric-label { font-size: 0.875rem; color: var(--text-secondary); }
+
+.habit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.habit-form input, .habit-form select {
+  padding: 12px;
+  background: var(--card-overlay);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: white;
 }

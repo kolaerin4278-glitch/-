@@ -121,29 +121,34 @@ class App {
     });
   }
 
-  private showAddHabitDialog(): void {
-    // Временно показываем alert, позже заменим на красивую модалку
-    const title = prompt('Название привычки:');
-    if (!title) return;
+import { modalManager } from './ui/modal';
+import { getHabitFormHTML } from './components/HabitForm';
+
+// ... (внутри метода showAddHabitDialog)
+  private async showAddHabitDialog(): Promise<void> {
+    await modalManager.open(getHabitFormHTML());
     
-    const icon = prompt('Иконка (эмодзи):', '✨') ?? '✨';
-    const sphere = prompt('Сфера (Тело/Разум/Дело/Дух):', 'Дело');
-    const trigger = prompt('Триггер (когда делаешь):', '') ?? '';
-    
-    storage.addHabit({
-      title,
-      icon,
-      sphere: sphere as any,
-      type: 'binary',
-      trigger,
-      norm: 'Выполнено',
-      planB: 'Минимум',
-      keystone: false,
-      incognito: false,
-      capsule: ''
+    const form = document.getElementById('habitForm') as HTMLFormElement;
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      
+      storage.addHabit({
+        title: formData.get('title') as string,
+        icon: formData.get('icon') as string,
+        sphere: formData.get('sphere') as any,
+        type: 'binary',
+        trigger: formData.get('trigger') as string,
+        norm: 'Выполнено',
+        planB: 'Минимум',
+        keystone: false,
+        incognito: false,
+        capsule: ''
+      });
+      
+      modalManager.close();
+      this.showIsland('Привычка добавлена ✨');
     });
-    
-    this.showIsland('Привычка добавлена ✓');
   }
 
   private render(): void {
@@ -153,6 +158,11 @@ class App {
     // Пока рендерим только страницу "Сегодня"
     if (this.currentTab === 'today') {
       this.renderTodayPage(container);
+import { getAnalyticsHTML } from './components/AnalyticsView';
+
+// ... (в методе render)
+    } else if (this.currentTab === 'analytics') {
+      container.innerHTML = `<div class="page">${getAnalyticsHTML()}</div>`;
     } else {
       container.innerHTML = `
         <div class="page">
