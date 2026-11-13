@@ -4,8 +4,10 @@
   --card-grouped: #16161A;
   --card-raised: #222228;
   --card-overlay: #2D2D36;
-  --glass-nav: rgba(18, 18, 22, 0.92);
-  --glass-header: rgba(10, 10, 12, 0.92);
+  --glass-nav: rgba(18, 18, 22, 0.7);
+  --glass-header: rgba(10, 10, 12, 0.7);
+  --glass-panel: rgba(255, 255, 255, 0.05);
+  --glass-blur: blur(20px) saturate(180%);
   --glass-border: rgba(255, 255, 255, 0.1);
   --hairline: inset 0 0.5px 0.5px rgba(255, 255, 255, 0.18);
   --shadow-ambient: 0 8px 24px rgba(0, 0, 0, 0.7);

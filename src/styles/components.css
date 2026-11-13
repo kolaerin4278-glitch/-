@@ -1,5 +1,17 @@
+.glass-card {
+  background: var(--glass-panel);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  contain: layout style paint;
+}
+
 .habit-card {
-  background: var(--card-grouped);
+  background: var(--glass-panel);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 12px;
@@ -175,10 +187,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--card-grouped);
+  background: var(--glass-panel);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
   padding: 12px 16px;
-  box-shadow: var(--hairline);
 }
 
 .campfire-title {
@@ -193,10 +206,11 @@
 }
 
 .energy-card {
-  background: var(--card-grouped);
+  background: var(--glass-panel);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
   padding: 12px 16px;
-  box-shadow: var(--hairline);
 }
 
 .energy-header {
@@ -297,7 +311,9 @@
 }
 
 .modal-sheet {
-  background: var(--card-raised);
+  background: var(--glass-nav);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   width: 100%;
   max-height: 90dvh;
   overflow-y: auto;
@@ -372,7 +388,9 @@
 
 /* Cards & Sections (Analytics, Mastery, Rituals, Settings) */
 .section-card {
-  background: var(--card-grouped);
+  background: var(--glass-panel);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 12px;
