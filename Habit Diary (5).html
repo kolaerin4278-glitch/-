@@ -1,0 +1,3393 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Дневник привычек</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card-grouped: #16161A;
+      --card-raised: #222228;
+      --card-overlay: #2D2D36;
+      --glass-nav: rgba(18, 18, 22, 0.92);
+      --glass-header: rgba(10, 10, 12, 0.92);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --hairline: inset 0 0.5px 0.5px rgba(255, 255, 255, 0.18);
+      --shadow-ambient: 0 8px 24px rgba(0, 0, 0, 0.7);
+
+      --text-primary: #FFFFFF;
+      --text-secondary: #90909A;
+      --text-tertiary: #585864;
+
+      --emerald: #34C759;
+      --emerald-glow: rgba(52, 199, 89, 0.3);
+      --amber: #FF9500;
+      --amber-glow: rgba(255, 149, 0, 0.3);
+      --coral: #FF3B30;
+      --sapphire: #0A84FF;
+      --indigo: #BF5AF2;
+      --gold: #FFD60A;
+      --teal: #64D2FF;
+
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --spring: cubic-bezier(0.25, 1, 0.5, 1);
+      --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    }
+
+    /* БЛОКИРОВКА СЛУЧАЙНОГО ОБНОВЛЕНИЯ СТРАНИЦЫ В CHROME */
+    html, body {
+      overscroll-behavior: none !important;
+      overscroll-behavior-y: none !important;
+      -webkit-overscroll-behavior: none !important;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-system);
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    #privacyScreen {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 99999;
+      display: none;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    #privacyScreen.active {
+      display: block;
+      pointer-events: auto;
+      opacity: 1;
+    }
+
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none !important;
+      z-index: 4000;
+    }
+
+    /* ФИКСИРОВАННАЯ ШАПКА */
+    .ios-fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 95;
+      background: var(--glass-header);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid var(--glass-border);
+      display: flex;
+      justify-content: center;
+    }
+    .header-inner {
+      width: 100%;
+      max-width: 440px;
+      padding: calc(var(--safe-top) + 8px) 16px 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-title-box h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+    }
+    .header-sub-date {
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-add-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 9999px;
+      background: var(--emerald);
+      color: #000;
+      border: none;
+      font-size: 1.25rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 10px var(--emerald-glow);
+    }
+    .header-add-btn:active { transform: scale(0.92); }
+
+    .campfire-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--card-raised);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 9999px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    .campfire-flame {
+      width: 16px;
+      height: 16px;
+      fill: var(--text-tertiary);
+      transition: fill 0.25s ease;
+    }
+    .campfire-flame.lit {
+      fill: var(--amber);
+      filter: drop-shadow(0 0 6px var(--amber));
+    }
+    .campfire-pct {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--amber);
+    }
+
+    /* DYNAMIC ISLAND ОПОВЕЩЕНИЯ */
+    .dynamic-island-anchor {
+      position: fixed;
+      top: calc(var(--safe-top) + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5000;
+      pointer-events: none;
+    }
+    .dynamic-island {
+      min-width: 140px;
+      height: 38px;
+      background: #000;
+      border: 0.5px solid rgba(255, 255, 255, 0.25);
+      border-radius: 9999px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9), var(--hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 14px;
+      gap: 10px;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      pointer-events: auto;
+      transition: all 0.3s var(--spring);
+      transform-origin: top center;
+    }
+    .dynamic-island.collapsed {
+      opacity: 0;
+      transform: scale(0.6) translateY(-20px);
+      pointer-events: none;
+    }
+    .island-undo-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: var(--amber);
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      cursor: pointer;
+    }
+
+    /* VIEWPORT И ГОРИЗОНТАЛЬНЫЙ СЛАЙДЕР ВКЛАДОК */
+    .app-viewport {
+      width: 100%;
+      max-width: 440px;
+      margin: 0 auto;
+      height: 100vh;
+      height: 100dvh;
+      position: relative;
+      overflow: hidden;
+    }
+    .tab-carousel-track {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      overscroll-behavior-y: none;
+    }
+    .tab-carousel-track::-webkit-scrollbar { display: none; }
+    .tab-carousel-page {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      box-sizing: border-box;
+      padding: calc(var(--safe-top) + 68px) 16px calc(var(--safe-bottom) + 98px) 16px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+
+    /* ПАРИРУЮЩИЙ НИЖНИЙ ОСТРОВ НАВИГАЦИИ */
+    .ios-island-navbar {
+      position: fixed;
+      bottom: calc(var(--safe-bottom) + 12px);
+      left: 14px;
+      right: 14px;
+      max-width: 412px;
+      margin: 0 auto;
+      height: 64px;
+      background: var(--glass-nav);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 32px;
+      border: 0.5px solid var(--glass-border);
+      box-shadow: var(--shadow-ambient), var(--hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px;
+      z-index: 100;
+    }
+    .nav-slider-pill {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      width: calc((100% - 12px) / 5);
+      height: 52px;
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 0.5px 0.5px rgba(255, 255, 255, 0.25);
+      border-radius: 26px;
+      pointer-events: none;
+      z-index: 1;
+      will-change: transform;
+      transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .nav-tab-btn {
+      flex: 1;
+      height: 52px;
+      border: none;
+      background: transparent;
+      color: var(--text-tertiary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      font-size: 0.66rem;
+      font-weight: 700;
+      cursor: pointer;
+      position: relative;
+      z-index: 2;
+      transition: color 0.16s ease;
+    }
+    .nav-tab-btn.active { color: #FFFFFF; }
+    .nav-tab-btn.active svg { stroke: var(--emerald); }
+    .nav-tab-btn svg {
+      width: 21px;
+      height: 21px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    /* PIP МИНИ-ПЛЕЕР */
+    .pip-docked-bar {
+      position: fixed;
+      bottom: calc(var(--safe-bottom) + 82px);
+      left: 16px;
+      right: 16px;
+      max-width: 408px;
+      margin: 0 auto;
+      background: var(--glass-nav);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), var(--hairline);
+      padding: 10px 14px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 92;
+    }
+    .pip-docked-bar.active { display: flex; }
+
+    /* ДАТЫ И ЭНЕРГИЯ */
+    .date-snap-scroller {
+      display: flex;
+      gap: 6px;
+      padding-bottom: 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .date-snap-scroller::-webkit-scrollbar { display: none; }
+    .date-chip {
+      flex: 1;
+      min-width: 80px;
+      padding: 7px 8px;
+      background: var(--card-grouped);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 14px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .date-chip.active {
+      background: #FFFFFF;
+      color: #000000;
+      border-color: #FFFFFF;
+      transform: scale(1.02);
+    }
+    .date-chip-day { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; opacity: 0.7; }
+    .date-chip-num { font-size: 0.88rem; font-weight: 800; }
+
+    .energy-slider-card {
+      background: var(--card-grouped);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 13px 15px;
+      margin-bottom: 12px;
+    }
+    .energy-card-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 9px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .energy-track-container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .energy-level-tab {
+      height: 38px;
+      border-radius: 11px;
+      background: var(--card-raised);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--text-tertiary);
+      border: 0.5px solid transparent;
+      transition: transform 0.15s ease;
+    }
+    .energy-level-tab.selected { color: #fff; transform: scale(1.03); }
+    .energy-level-tab[data-val="1"].selected { background: #FF453A; }
+    .energy-level-tab[data-val="2"].selected { background: #FF9F0A; }
+    .energy-level-tab[data-val="3"].selected { background: #FFD60A; color: #000; }
+    .energy-level-tab[data-val="4"].selected { background: #30D158; }
+    .energy-level-tab[data-val="5"].selected { background: #64D2FF; color: #000; }
+
+    .filter-segmented-bar {
+      display: flex;
+      background: var(--card-grouped);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 9999px;
+      padding: 3px;
+      margin-bottom: 12px;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .filter-segmented-bar::-webkit-scrollbar { display: none; }
+    .filter-pill {
+      flex: 1;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .filter-pill.active { background: var(--card-overlay); color: #fff; box-shadow: var(--hairline); }
+
+    /* КАРТОЧКА ПРИВЫЧКИ (ЧИСТЫЕ СВАЙПЫ, БЕЗ КНОПОК) */
+    .habits-scroll-list {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+    .habit-swipe-wrap {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      touch-action: pan-y;
+      background: var(--card-raised);
+    }
+    .swipe-backdrop-indicator {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      pointer-events: none;
+    }
+    .swipe-left-label {
+      color: var(--amber);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.35;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .swipe-left-label.lit-planb { color: var(--amber); opacity: 1; transform: scale(1.06); }
+    .swipe-left-label.lit-full { color: var(--emerald); opacity: 1; transform: scale(1.1); }
+    .swipe-right-label {
+      color: var(--coral);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.35;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .swipe-right-label.lit-skip { opacity: 1; transform: scale(1.06); }
+
+    .habit-card {
+      position: relative;
+      background: var(--card-grouped);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+      transition: border-color 0.2s ease;
+    }
+    .habit-card.status-full {
+      background: linear-gradient(180deg, rgba(52, 199, 89, 0.16), var(--card-grouped));
+      border-color: rgba(52, 199, 89, 0.5);
+    }
+    .habit-card.status-plan_b {
+      background: linear-gradient(180deg, rgba(255, 149, 0, 0.16), var(--card-grouped));
+      border-color: rgba(255, 149, 0, 0.5);
+    }
+    .habit-card.status-skip {
+      opacity: 0.5;
+      border-color: rgba(255, 59, 48, 0.35);
+    }
+
+    .habit-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .habit-lead {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+    .habit-icon-squircle {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: var(--card-raised);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+    .habit-title-box { min-width: 0; flex: 1; }
+    .habit-name {
+      font-size: 0.96rem;
+      font-weight: 750;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .habit-sphere-tag {
+      font-size: 0.64rem;
+      font-weight: 700;
+      color: var(--teal);
+      background: rgba(100, 210, 255, 0.12);
+      padding: 1px 6px;
+      border-radius: 6px;
+      margin-left: 4px;
+    }
+    .streak-badge {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--amber);
+      background: rgba(255, 149, 0, 0.14);
+      padding: 3px 9px;
+      border-radius: 9999px;
+      border: 0.5px solid rgba(255, 149, 0, 0.3);
+      white-space: nowrap;
+    }
+
+    .mastery-progress-track {
+      width: 100%;
+      height: 4px;
+      background: var(--card-raised);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+    .mastery-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--indigo), var(--emerald));
+      border-radius: 9999px;
+      transition: width 0.25s ease;
+    }
+
+    .habit-trigger-line {
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      line-height: 1.35;
+    }
+    .habit-trigger-line em {
+      font-style: normal;
+      color: var(--text-tertiary);
+    }
+    .habit-trigger-line strong {
+      color: #A5B4FC;
+      font-weight: 600;
+    }
+
+    .plan-b-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 149, 0, 0.12);
+      border: 0.5px solid rgba(255, 149, 0, 0.28);
+      border-radius: 10px;
+      padding: 5px 10px;
+      font-size: 0.74rem;
+      color: #FFB340;
+    }
+    .plan-b-pill strong { color: #fff; }
+
+    .counter-controls-inline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-raised);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 2px 6px;
+      height: 38px;
+    }
+    .counter-btn-mini {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--card-grouped);
+      border: none;
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .counter-btn-mini:active { transform: scale(0.9); }
+
+    .card-swipe-hint-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.67rem;
+      color: var(--text-tertiary);
+      border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+      padding-top: 6px;
+      margin-top: 2px;
+    }
+
+    /* АККОРДЕОН ЗАВЕРШЕННЫХ */
+    .completed-accordion-wrap {
+      margin-top: 14px;
+      background: var(--card-grouped);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .accordion-header-toggle {
+      padding: 13px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .acc-header-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 0.82rem;
+      font-weight: 750;
+      color: var(--text-secondary);
+    }
+    .acc-badge-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: rgba(52, 199, 89, 0.16);
+      color: var(--emerald);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 900;
+    }
+    .acc-chevron {
+      color: var(--text-tertiary);
+      font-size: 0.85rem;
+      transition: transform 0.28s var(--spring);
+    }
+    .acc-chevron.rotated { transform: rotate(180deg); }
+    .accordion-collapsible-body {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 0.32s var(--spring), opacity 0.22s ease, padding 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 0 12px;
+    }
+    .accordion-collapsible-body.open {
+      max-height: 2000px;
+      opacity: 1;
+      padding: 0 12px 14px 12px;
+    }
+
+    /* РИТУАЛЫ */
+    .ritual-card {
+      background: var(--card-grouped);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .ritual-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ritual-title-meta {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+    .ritual-steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--card-raised);
+      border-radius: 13px;
+      padding: 10px 12px;
+      border: 0.5px solid var(--glass-border);
+    }
+    .ritual-step-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+    }
+    .ritual-step-item span:first-child { color: #fff; font-weight: 600; }
+    .ritual-step-item span:last-child { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+    /* АНАЛИЗ */
+    .period-filter-bar {
+      display: flex;
+      background: var(--card-grouped);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 9999px;
+      padding: 3px;
+      margin-bottom: 14px;
+      gap: 4px;
+    }
+    .period-tab-btn {
+      flex: 1;
+      padding: 7px 4px;
+      border-radius: 9999px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+    }
+    .period-tab-btn.active {
+      background: var(--card-overlay);
+      color: #fff;
+      box-shadow: var(--hairline);
+    }
+
+    .analytics-grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .metric-widget-card {
+      background: var(--card-grouped);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .metric-header {
+      font-size: 0.68rem;
+      font-weight: 750;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .metric-big-val {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+    .metric-sub-note {
+      font-size: 0.68rem;
+      color: var(--text-tertiary);
+    }
+
+    .heatmap-glass-card {
+      background: var(--card-grouped);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 15px;
+      margin-bottom: 14px;
+    }
+    .heatmap-scroll-area {
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 6px;
+    }
+    .heatmap-scroll-area::-webkit-scrollbar { display: none; }
+    .heatmap-365-grid {
+      display: grid;
+      grid-template-rows: repeat(7, 11px);
+      grid-auto-flow: column;
+      gap: 3.5px;
+      width: max-content;
+    }
+    .heat-cell-node {
+      width: 11px;
+      height: 11px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.06);
+      cursor: pointer;
+    }
+    .heat-cell-node.status-planb { background: var(--amber); }
+    .heat-cell-node.status-full { background: var(--emerald); }
+
+    .weekday-bars-container {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      align-items: flex-end;
+      height: 85px;
+      margin-top: 10px;
+      padding-top: 8px;
+    }
+    .weekday-bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .weekday-bar-fill {
+      width: 100%;
+      max-width: 18px;
+      border-radius: 6px;
+      background: var(--card-overlay);
+      min-height: 4px;
+      transition: height 0.25s ease;
+    }
+    .weekday-bar-fill.highlight { background: linear-gradient(180deg, var(--teal), var(--sapphire)); }
+    .weekday-bar-label { font-size: 0.65rem; font-weight: 750; color: var(--text-secondary); }
+
+    .aurora-wrap-card {
+      border-radius: 24px;
+      padding: 20px 18px;
+      background: linear-gradient(135deg, rgba(88, 86, 214, 0.3), rgba(52, 199, 89, 0.22), rgba(255, 149, 0, 0.25));
+      border: 0.5px solid rgba(255, 255, 255, 0.18);
+      margin-bottom: 14px;
+    }
+
+    /* НАСТРОЙКИ */
+    .settings-section-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .settings-row-item {
+      background: var(--card-grouped);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .settings-row-item:active { transform: scale(0.985); }
+    .settings-title { font-size: 0.88rem; font-weight: 750; color: #fff; }
+    .settings-desc { font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px; }
+
+    /* МОДАЛЬНЫЕ ШТОРКИ С ЗАЩИТОЙ PULL-TO-DISMISS */
+    .sheet-scrim {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 1000;
+      display: none;
+      pointer-events: none;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.24s ease;
+      overscroll-behavior: none !important;
+      overscroll-behavior-y: none !important;
+    }
+    .sheet-scrim.active {
+      display: flex;
+      pointer-events: auto;
+      opacity: 1;
+    }
+    .sheet-body {
+      width: 100%;
+      max-width: 440px;
+      background: #18181D;
+      border-top: 0.5px solid rgba(255, 255, 255, 0.2);
+      border-radius: 28px 28px 0 0;
+      padding: 12px 20px calc(var(--safe-bottom) + 24px) 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+      touch-action: pan-y;
+      overscroll-behavior: contain !important;
+      overscroll-behavior-y: contain !important;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.85);
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+    .sheet-body.smooth-dismiss {
+      transition: transform 0.24s var(--spring);
+    }
+    .sheet-handle-zone {
+      padding: 4px 0 14px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: grab;
+      touch-action: none;
+    }
+    .sheet-handle {
+      width: 40px;
+      height: 5px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* КОНТЕКСТНОЕ МЕНЮ */
+    #glassContextMenu {
+      position: fixed;
+      z-index: 3000;
+      width: 230px;
+      background: rgba(28, 28, 34, 0.95);
+      border: 0.5px solid rgba(255, 255, 255, 0.18);
+      border-radius: 20px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.9), var(--hairline);
+      padding: 6px;
+      display: none;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .context-menu-item {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      text-align: left;
+    }
+    .context-menu-item:active { background: rgba(255, 255, 255, 0.12); }
+
+    /* ФОРМЫ И ИНПУТЫ */
+    .ios-input, .ios-select, .ios-textarea {
+      width: 100%;
+      min-height: 46px;
+      padding: 11px 14px;
+      background: var(--card-raised);
+      box-shadow: var(--hairline);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 13px;
+      color: #fff;
+      font-size: 16px !important;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 12px;
+    }
+    .ios-input:focus, .ios-select:focus, .ios-textarea:focus {
+      border-color: var(--emerald);
+    }
+    .sheet-btn-primary {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 15px;
+      background: var(--emerald);
+      color: #000;
+      font-weight: 800;
+      font-size: 0.92rem;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 16px var(--emerald-glow);
+    }
+    .sheet-btn-primary:active { transform: scale(0.97); }
+    .sheet-btn-secondary {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 14px;
+      background: transparent;
+      border: 0.5px solid var(--glass-border);
+      color: var(--text-secondary);
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .empty-state-box {
+      padding: 50px 20px;
+      text-align: center;
+    }
+    .empty-state-box h3 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 12px 0 6px 0;
+    }
+    .empty-state-box p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      max-width: 290px;
+      margin: 0 auto 18px auto;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="privacyScreen"></div>
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- DYNAMIC ISLAND -->
+  <div class="dynamic-island-anchor">
+    <div class="dynamic-island collapsed" id="dynamicIsland">
+      <span id="islandIcon">🔥</span>
+      <span id="islandMessage">Ритм</span>
+      <button class="island-undo-btn" id="islandUndoBtn" onclick="triggerUndoAction()" style="display:none;">Отменить</button>
+    </div>
+  </div>
+
+  <!-- CONTEXT MENU -->
+  <div id="glassContextMenu">
+    <button class="context-menu-item" onclick="contextAction('plan_b')">🟡 План Б на сегодня</button>
+    <button class="context-menu-item" onclick="contextAction('full')">🟢 Закрыть норму</button>
+    <button class="context-menu-item" onclick="contextAction('capsule')">💌 Капсула времени</button>
+    <button class="context-menu-item" style="color:var(--coral);" onclick="contextAction('delete')">🗑️ Удалить</button>
+  </div>
+
+  <!-- FIXED HEADER -->
+  <header class="ios-fixed-header">
+    <div class="header-inner">
+      <div class="header-title-box">
+        <h1 id="pageHeading">Сегодня</h1>
+        <div class="header-sub-date" id="headerDateLabel">Среда, 11 нояб.</div>
+      </div>
+      <div class="header-actions">
+        <button class="header-add-btn" onclick="openCreateHabitModal()" title="Добавить цель">+</button>
+        <div class="campfire-badge" onclick="inspectCampfire()">
+          <svg class="campfire-flame" id="campfireFlame" viewBox="0 0 24 24">
+            <path d="M12 2c-.3 2.1-1.6 3.6-3.1 5.3C7.2 9.2 5.5 11.2 5.5 14c0 3.6 2.9 6.5 6.5 6.5s6.5-2.9 6.5-6.5c0-1.8-.7-3.4-1.8-4.6-1.5 2.1-2.9 2.5-3.7 1.2-1-1.6.4-4.5-.4-6.6-.2-.7-.4-1.4-.6-2z"/>
+          </svg>
+          <span class="campfire-pct" id="campfirePctText">0%</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- VIEWPORT & CAROUSEL TRACK -->
+  <div class="app-viewport" id="appViewport">
+    <div class="tab-carousel-track" id="tabPagesSlider">
+
+      <!-- ==================== СТРАНИЦА 0: СЕГОДНЯ ==================== -->
+      <section class="tab-carousel-page" id="pageToday">
+        <div class="date-snap-scroller" id="dateSnapScroller"></div>
+
+        <div class="energy-slider-card">
+          <div class="energy-card-header">
+            <span>⚡ Пульс энергии</span>
+            <span id="energyWordTitle">Укажи уровень сил</span>
+          </div>
+          <div class="energy-track-container">
+            <div class="energy-level-tab" data-val="1" onclick="setDailyEnergy(1)">1 😴</div>
+            <div class="energy-level-tab" data-val="2" onclick="setDailyEnergy(2)">2 🥱</div>
+            <div class="energy-level-tab" data-val="3" onclick="setDailyEnergy(3)">3 😐</div>
+            <div class="energy-level-tab" data-val="4" onclick="setDailyEnergy(4)">4 🙂</div>
+            <div class="energy-level-tab" data-val="5" onclick="setDailyEnergy(5)">5 🔥</div>
+          </div>
+        </div>
+
+        <div class="filter-segmented-bar">
+          <button class="filter-pill active" onclick="setFilter('all', this)">Все</button>
+          <button class="filter-pill" onclick="setFilter('Здоровье', this)">💪 Здоровье</button>
+          <button class="filter-pill" onclick="setFilter('Разум', this)">🧠 Разум</button>
+          <button class="filter-pill" onclick="setFilter('Карьера', this)">💼 Карьера</button>
+          <button class="filter-pill" onclick="setFilter('Быт', this)">🏡 Быт</button>
+        </div>
+
+        <!-- НЕЗАВЕРШЕННЫЕ ПРИВЫЧКИ -->
+        <div class="habits-scroll-list" id="habitsListActive"></div>
+
+        <!-- АККОРДЕОН ВЫПОЛНЕННЫХ -->
+        <div class="completed-accordion-wrap" id="completedAccordionWrap" style="display:none;">
+          <div class="accordion-header-toggle" onclick="toggleCompletedAccordion()">
+            <div class="acc-header-left">
+              <span class="acc-badge-icon">✓</span>
+              <span id="completedAccordionTitle">Завершено сегодня (0)</span>
+            </div>
+            <span class="acc-chevron" id="completedAccordionChevron">▾</span>
+          </div>
+          <div class="accordion-collapsible-body" id="completedAccordionBody"></div>
+        </div>
+      </section>
+
+      <!-- ==================== СТРАНИЦА 1: РИТУАЛЫ ==================== -->
+      <section class="tab-carousel-page" id="pageRituals">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span style="font-size:0.78rem; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">Цепочки шагов</span>
+          <button class="sheet-btn-primary" style="width:auto; padding:6px 14px; min-height:36px;" onclick="openCreateRitualModal()">+ Ритуал</button>
+        </div>
+        <div id="ritualsContainer" style="display:flex; flex-direction:column; gap:12px;"></div>
+      </section>
+
+      <!-- ==================== СТРАНИЦА 2: АНАЛИЗ ==================== -->
+      <section class="tab-carousel-page" id="pageAnalytics">
+        <div class="period-filter-bar">
+          <button class="period-tab-btn active" onclick="setAnalyticsPeriod('7d', this)">7 дней</button>
+          <button class="period-tab-btn" onclick="setAnalyticsPeriod('30d', this)">30 дней</button>
+          <button class="period-tab-btn" onclick="setAnalyticsPeriod('month', this)">Этот месяц</button>
+          <button class="period-tab-btn" onclick="setAnalyticsPeriod('all', this)">Все время</button>
+        </div>
+
+        <div class="analytics-grid-2x2">
+          <div class="metric-widget-card">
+            <span class="metric-header">Успешность ритма</span>
+            <span class="metric-big-val" id="metricSuccessRate">0%</span>
+            <span class="metric-sub-note" id="metricSuccessSub">норм и планов Б</span>
+          </div>
+
+          <div class="metric-widget-card">
+            <span class="metric-header">Спасенные дни</span>
+            <span class="metric-big-val" style="color:var(--amber);" id="metricSavedDays">0</span>
+            <span class="metric-sub-note">удержано Планом Б</span>
+          </div>
+
+          <div class="metric-widget-card">
+            <span class="metric-header">Средняя энергия</span>
+            <span class="metric-big-val" style="color:var(--teal);" id="metricAvgEnergy">0.0</span>
+            <span class="metric-sub-note">из 5.0 баллов</span>
+          </div>
+
+          <div class="metric-widget-card">
+            <span class="metric-header">Норма vs План Б</span>
+            <span class="metric-big-val" style="color:var(--emerald);" id="metricRatioNorm">0/0</span>
+            <span class="metric-sub-note">соотношение целей</span>
+          </div>
+        </div>
+
+        <div class="heatmap-glass-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span style="font-size:0.86rem; font-weight:800; color:#fff;">Годовая карта ритма</span>
+            <span style="font-size:0.7rem; color:var(--text-secondary);">365 дней</span>
+          </div>
+          <div class="heatmap-scroll-area">
+            <div class="heatmap-365-grid" id="annualHeatmapGrid"></div>
+          </div>
+        </div>
+
+        <div class="heatmap-glass-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.84rem; font-weight:800; color:#fff;">Продуктивность по дням недели</span>
+            <span style="font-size:0.7rem; color:var(--emerald);" id="bestWeekdayLabel">Лучший: Вт</span>
+          </div>
+          <div class="weekday-bars-container" id="weekdayBarsContainer"></div>
+        </div>
+
+        <div class="heatmap-glass-card">
+          <span style="font-size:0.7rem; text-transform:uppercase; color:var(--indigo); font-weight:800;">⚡ Скрытая суперсвязь</span>
+          <p id="superlinkInsightText" style="font-size:0.82rem; color:#fff; line-height:1.45; margin-top:8px;">
+            Отмечай уровень сил и действия для выявления персональных взаимосвязей.
+          </p>
+        </div>
+
+        <div class="heatmap-glass-card">
+          <span style="font-size:0.84rem; font-weight:800; color:#fff;">Привычки-якоря и зона риска</span>
+          <div id="habitResilienceList" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
+        </div>
+
+        <div class="heatmap-glass-card">
+          <span style="font-size:0.84rem; font-weight:800; color:#fff;">Честный разбор пропусков</span>
+          <div id="skipReasonsBreakdown" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
+        </div>
+
+        <div class="aurora-wrap-card">
+          <div style="font-size:0.68rem; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:#fff; opacity:0.8;">
+            Итоги месяца • Паспорт дисциплины
+          </div>
+          <h2 style="font-size:1.6rem; font-weight:900; letter-spacing:-0.03em; margin-top:4px;" id="archetypeTitle">Хранитель ритма 🛡️</h2>
+          <p style="font-size:0.78rem; line-height:1.4; color:rgba(255,255,255,0.85); margin-top:6px;" id="archetypeDesc">
+            Ты сохраняешь стабильность даже в тяжелые дни благодаря разумному использованию Плана Б.
+          </p>
+          <button class="sheet-btn-primary" style="margin-top:10px; background:#fff; color:#000;" onclick="renderMonthlyPoster()">
+            📸 Сохранить постер месяца (PNG)
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== СТРАНИЦА 3: МАСТЕРСТВО (60 DAYS) ==================== -->
+      <section class="tab-carousel-page" id="pageMastery">
+        <div style="text-align:center; padding:10px 0;">
+          <div style="font-size:2.4rem;">🏆</div>
+          <h2 style="font-size:1.25rem; font-weight:800; margin-top:4px;">Полка Мастерства</h2>
+          <p style="font-size:0.76rem; color:var(--text-secondary); max-width:300px; margin:4px auto 0 auto;">
+            Привычка укореняется в жизнь только после 60 дней непрерывной серии. Никаких досрочных поблажек.
+          </p>
+        </div>
+
+        <h3 style="font-size:0.82rem; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin-top:8px;">На пути к 60 дням:</h3>
+        <div id="masteryActiveList" style="display:flex; flex-direction:column; gap:10px; margin-top:8px;"></div>
+
+        <h3 style="font-size:0.82rem; font-weight:800; color:var(--gold); text-transform:uppercase; margin-top:16px;">Укорененные навыки:</h3>
+        <div id="masteryGraduatedList" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"></div>
+      </section>
+
+      <!-- ==================== СТРАНИЦА 4: ОПЦИИ / НАСТРОЙКИ ==================== -->
+      <section class="tab-carousel-page" id="pageSettings">
+        <div class="settings-section-list">
+          <div class="settings-row-item" onclick="openTutorialModal()">
+            <div>
+              <div class="settings-title" style="color:var(--emerald);">🎓 Обучение и песочница свайпов</div>
+              <div class="settings-desc">Интерактивный тур и калибровка жестов</div>
+            </div>
+            <span>→</span>
+          </div>
+
+          <div class="settings-row-item" onclick="openShieldModal()">
+            <div>
+              <div class="settings-title">🛡️ Заморозка серий (Щиты)</div>
+              <div class="settings-desc" id="shieldSummarySub">Доступно: 2 щита</div>
+            </div>
+            <span>→</span>
+          </div>
+
+          <div class="settings-row-item" onclick="openDayBoundaryModal()">
+            <div>
+              <div class="settings-title">🌙 Смена границы суток</div>
+              <div class="settings-desc" id="boundarySummarySub">00:00 (Полночь)</div>
+            </div>
+            <span>→</span>
+          </div>
+
+          <div class="settings-row-item" onclick="cycleHapticSetting()">
+            <div>
+              <div class="settings-title">📳 Taptic Engine (Отдача)</div>
+              <div class="settings-desc" id="hapticSettingSub">Стандартная</div>
+            </div>
+            <span id="hapticSettingBadge">●</span>
+          </div>
+
+          <div class="settings-row-item" onclick="openSyncModal()">
+            <div>
+              <div class="settings-title" style="color:var(--teal);">🔄 Перенос в 1 клик (HD_SYNC)</div>
+              <div class="settings-desc">Перенос в Telegram и другие платформы</div>
+            </div>
+            <span>→</span>
+          </div>
+
+          <div class="settings-row-item" onclick="openQrModal()">
+            <div>
+              <div class="settings-title">📷 Офлайн QR-перенос</div>
+              <div class="settings-desc">Миграция через камеру без сети</div>
+            </div>
+            <span>→</span>
+          </div>
+
+          <div class="settings-row-item" onclick="exportData('markdown')">
+            <div>
+              <div class="settings-title">📑 Экспорт в Markdown (Obsidian / Notion)</div>
+              <div class="settings-desc">Текстовая база знаний</div>
+            </div>
+            <span>↓</span>
+          </div>
+
+          <div class="settings-row-item" onclick="exportData('csv')">
+            <div>
+              <div class="settings-title">📊 Экспорт в CSV (Таблицы)</div>
+              <div class="settings-desc">Формат Excel / Google Sheets</div>
+            </div>
+            <span>↓</span>
+          </div>
+
+          <div class="settings-row-item" onclick="exportData('json')">
+            <div>
+              <div class="settings-title">💾 Резервная копия базы (.json)</div>
+              <div class="settings-desc">Полный локальный бэкап</div>
+            </div>
+            <span>↓</span>
+          </div>
+
+          <label class="settings-row-item" style="cursor:pointer;">
+            <div>
+              <div class="settings-title">📥 Восстановить базу (.json)</div>
+              <div class="settings-desc">Импорт с умным слиянием</div>
+            </div>
+            <span>↑</span>
+            <input type="file" accept=".json" style="display:none;" onchange="importJsonFile(event)">
+          </label>
+
+          <div class="settings-row-item" onclick="openResetConfirmSheet()" style="border-color:rgba(255, 59, 48, 0.4);">
+            <div>
+              <div class="settings-title" style="color:var(--coral);">🗑️ Полный сброс базы</div>
+              <div class="settings-desc">Очистить историю и начать с нуля</div>
+            </div>
+            <span>✕</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- FLOATING MINI-PLAYER (PIP) -->
+  <div class="pip-docked-bar" id="pipMiniPlayer">
+    <div style="display:flex; align-items:center; gap:9px;">
+      <span id="pipIcon" style="font-size:1.3rem;">⏱️</span>
+      <div>
+        <div style="font-size:0.75rem; font-weight:800; color:#fff;" id="pipTitle">Ритуал</div>
+        <div style="font-size:0.95rem; font-weight:900; color:var(--emerald); font-variant-numeric:tabular-nums;" id="pipTimerDigits">01:00</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="sheet-btn-secondary" style="width:38px; height:38px; padding:0; margin:0;" onclick="togglePlayerRunning()">⏯</button>
+      <button class="sheet-btn-secondary" style="width:38px; height:38px; padding:0; margin:0;" onclick="openSheet('modalRitualPlayer')">⤢</button>
+    </div>
+  </div>
+
+  <!-- FLOATING ISLAND NAVBAR -->
+  <nav class="ios-island-navbar" id="islandNavbar">
+    <div class="nav-slider-pill smooth-transition" id="navSliderPill"></div>
+
+    <button class="nav-tab-btn active" onclick="switchTab(0)">
+      <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Сегодня</span>
+    </button>
+
+    <button class="nav-tab-btn" onclick="switchTab(1)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 16 14"/></svg>
+      <span>Ритуалы</span>
+    </button>
+
+    <button class="nav-tab-btn" onclick="switchTab(2)">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Анализ</span>
+    </button>
+
+    <button class="nav-tab-btn" onclick="switchTab(3)">
+      <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H7"/><path d="M14 14.66V17c0 .55.45 1 1 1h2"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+      <span>Мастерство</span>
+    </button>
+
+    <button class="nav-tab-btn" onclick="switchTab(4)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Опции</span>
+    </button>
+  </nav>
+
+  <!-- ==================== ШТОРКИ (PULL-TO-DISMISS) ==================== -->
+
+  <!-- ШТОРКА: СОЗДАНИЕ ПРИВЫЧКИ -->
+  <div class="sheet-scrim" id="modalHabitForm">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <h3 style="font-size:1.15rem; font-weight:800; text-align:center; margin-bottom:14px;">Новая привычка</h3>
+      
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="habitIconInput" class="ios-input" value="🌱" style="width:58px; text-align:center; font-size:1.5rem !important;" maxlength="2">
+        <input type="text" id="habitTitleInput" class="ios-input" placeholder="Название привычки" autocomplete="off">
+      </div>
+
+      <label style="font-size:0.74rem; font-weight:700; color:var(--text-secondary);">Сфера жизни</label>
+      <select id="habitSphereSelect" class="ios-select">
+        <option value="Здоровье">💪 Здоровье и тело</option>
+        <option value="Разум">🧠 Разум и осознанность</option>
+        <option value="Карьера">💼 Карьера и фокус</option>
+        <option value="Быт">🏡 Быт и порядок</option>
+        <option value="Дух">✨ Дух и энергия</option>
+      </select>
+
+      <label style="font-size:0.74rem; font-weight:700; color:var(--text-secondary);">Тип нормы</label>
+      <select id="habitTypeSelect" class="ios-select">
+        <option value="binary">Чек-ин свайпом (Норма / План Б)</option>
+        <option value="counter">Счетчик (+/- стаканы, страницы)</option>
+      </select>
+
+      <label style="font-size:0.74rem; font-weight:700; color:var(--text-secondary);">Формула триггера: «После того как я...»</label>
+      <input type="text" id="habitTriggerInput" class="ios-input" placeholder="например: Заварю утренний кофе">
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div>
+          <label style="font-size:0.72rem; font-weight:700; color:var(--emerald);">Обычная цель</label>
+          <input type="text" id="habitNormInput" class="ios-input" placeholder="30 мин / 8 ст">
+        </div>
+        <div>
+          <label style="font-size:0.72rem; font-weight:700; color:var(--amber);">План Б (Минимум)</label>
+          <input type="text" id="habitPlanBInput" class="ios-input" placeholder="3 мин / 1 ст">
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <span style="font-size:0.78rem; font-weight:700;">👑 Ключевая цель дня (Keystone)</span>
+        <input type="checkbox" id="habitKeystoneCheck" style="width:20px; height:20px; accent-color:var(--gold);">
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <span style="font-size:0.78rem; font-weight:700;">🔒 Режим Инкогнито (маскировка)</span>
+        <input type="checkbox" id="habitIncognitoCheck" style="width:20px; height:20px; accent-color:var(--indigo);">
+      </div>
+
+      <label style="font-size:0.74rem; font-weight:700; color:var(--text-secondary);">Капсула времени (послание себе)</label>
+      <textarea id="habitCapsuleInput" class="ios-textarea" style="height:60px;" placeholder="Зачем ты это начинаешь..."></textarea>
+
+      <button type="button" class="sheet-btn-primary" onclick="saveHabitForm()">Сохранить привычку</button>
+      <button type="button" class="sheet-btn-secondary" onclick="closeSheet('modalHabitForm')">Отмена</button>
+    </div>
+  </div>
+
+  <!-- ШТОРКА: СОЗДАНИЕ РИТУАЛА -->
+  <div class="sheet-scrim" id="modalRitualForm">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <h3 style="font-size:1.15rem; font-weight:800; text-align:center; margin-bottom:14px;">Создать ритуал</h3>
+      
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="ritualIconInput" class="ios-input" value="🌅" style="width:58px; text-align:center; font-size:1.5rem !important;" maxlength="2">
+        <input type="text" id="ritualTitleInput" class="ios-input" placeholder="Название ритуала">
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0;">
+        <span style="font-size:0.76rem; font-weight:700; color:var(--text-secondary);">Шаги ритуала</span>
+        <button type="button" style="background:transparent; border:none; color:var(--emerald); font-weight:800; font-size:0.76rem; cursor:pointer;" onclick="addRitualStepField()">+ Добавить шаг</button>
+      </div>
+      <div id="ritualStepsBuilderList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>
+
+      <button type="button" class="sheet-btn-primary" onclick="saveRitualForm()">Сохранить ритуал</button>
+      <button type="button" class="sheet-btn-secondary" onclick="closeSheet('modalRitualForm')">Отмена</button>
+    </div>
+  </div>
+
+  <!-- ШТОРКА: ПЛЕЕР РИТУАЛА -->
+  <div class="sheet-scrim" id="modalRitualPlayer">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:12px; padding:6px 0;">
+        <span style="font-size:0.72rem; text-transform:uppercase; color:var(--text-secondary); font-weight:800;" id="playerStepCounter">Шаг 1 из 3</span>
+        <h2 style="font-size:1.35rem; font-weight:900;" id="playerStepTitle">Стакан воды</h2>
+
+        <div style="width:100%; height:6px; background:var(--card-overlay); border-radius:9999px; overflow:hidden;">
+          <div id="playerProgressBar" style="height:100%; width:33%; background:linear-gradient(90deg, var(--indigo), var(--emerald)); border-radius:9999px; transition:width 0.25s ease;"></div>
+        </div>
+
+        <div style="font-size:3.5rem; font-weight:900; font-variant-numeric:tabular-nums; color:#fff; letter-spacing:-0.04em;" id="playerTimerDigits">01:00</div>
+
+        <div style="display:flex; align-items:center; gap:10px; width:100%;">
+          <button type="button" class="sheet-btn-secondary" style="flex:1; margin:0;" onclick="adjustPlayerTime(30)">+30 сек</button>
+          <button type="button" class="sheet-btn-primary" style="flex:2;" onclick="togglePlayerRunning()" id="playerPlayBtn">Старт</button>
+          <button type="button" class="sheet-btn-secondary" style="flex:1; margin:0;" onclick="skipToNextStep()">Далее →</button>
+        </div>
+
+        <div style="font-size:0.74rem; color:var(--text-secondary); margin-top:4px;" id="playerNextStepPreview">
+          Далее: Разминка (7 мин)
+        </div>
+      </div>
+      <button type="button" class="sheet-btn-secondary" onclick="closeSheet('modalRitualPlayer')">Свернуть в мини-плеер</button>
+    </div>
+  </div>
+
+  <!-- ШТОРКА: ОБУЧЕНИЕ И ЖЕСТЫ -->
+  <div class="sheet-scrim" id="modalTutorial">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <h3 style="font-size:1.15rem; font-weight:800; text-align:center; margin-bottom:8px;">Обучение и жесты</h3>
+
+      <div style="padding:10px 0; text-align:center;">
+        <p style="font-size:0.78rem; color:var(--text-secondary);">Попробуй свайп прямо на карточке ниже:</p>
+        <div style="background:var(--card-grouped); border:0.5px solid var(--glass-border); border-radius:18px; padding:16px; margin:14px 0; touch-action:pan-y;" id="sandboxCard">
+          <div style="font-size:1.4rem;">🌱</div>
+          <div style="font-size:0.92rem; font-weight:800; margin-top:4px;">Тестовая цель</div>
+          <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">Короткий свайп вправо — План Б, длинный — Норма. Свайп влево — пропуск.</div>
+          <div id="sandboxFeedbackBadge" style="margin-top:8px; font-size:0.76rem; font-weight:800; color:var(--text-tertiary);">Потяни карточку...</div>
+        </div>
+        <p style="font-size:0.74rem; color:var(--text-secondary); line-height:1.4;">
+          <strong>Листание рабочих столов:</strong> двигай пальцем влево или вправо по экрану для перехода между разделами.
+        </p>
+      </div>
+      <button type="button" class="sheet-btn-primary" onclick="closeSheet('modalTutorial')">Понятно!</button>
+    </div>
+  </div>
+
+  <!-- ШТОРКА: ЩИТЫ -->
+  <div class="sheet-scrim" id="modalShieldSheet">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <div style="font-size:2.2rem; text-align:center;">🛡️</div>
+      <h3 style="font-size:1.15rem; font-weight:800; text-align:center; margin:6px 0;">Заморозка серии</h3>
+      <p style="font-size:0.78rem; color:var(--text-secondary); text-align:center; margin-bottom:14px;" id="shieldBalanceText">
+        Доступно щитов: 2. Активация защищает день от сгорания серий.
+      </p>
+      <button type="button" class="sheet-btn-primary" onclick="applyShieldForDate()">Защитить текущий день</button>
+      <button type="button" class="sheet-btn-secondary" onclick="closeSheet('modalShieldSheet')">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- ШТОРКА: СМЕНА СУТОК -->
+  <div class="sheet-scrim" id="modalDayBoundary">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <h3 style="font-size:1.15rem; font-weight:800; text-align:center; margin-bottom:12px;">Смена суток для полуночников</h3>
+      <select id="boundarySelect" class="ios-select">
+        <option value="0">00:00 (Полночь - стандарт)</option>
+        <option value="2">02:00 (Смена в 2 ночи)</option>
+        <option value="4">04:00 (Смена в 4 утра)</option>
+      </select>
+      <button type="button" class="sheet-btn-primary" onclick="saveDayBoundary()">Сохранить</button>
+      <button type="button" class="sheet-btn-secondary" onclick="closeSheet('modalDayBoundary')">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- ШТОРКА: 1-КЛИК ПЕРЕНОС -->
+  <div class="sheet-scrim" id="modalSyncSheet">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <h3 style="font-size:1.15rem; font-weight:800; text-align:center; margin-bottom:10px;">Мультиплатформенный перенос</h3>
+      <p style="font-size:0.74rem; color:var(--text-secondary); margin-bottom:8px;">Твой токен миграции:</p>
+      <textarea id="syncTokenArea" class="ios-textarea" style="height:60px; font-size:0.72rem !important;" readonly></textarea>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+        <button type="button" class="sheet-btn-primary" onclick="copySyncToken()">Копировать ключ</button>
+        <button type="button" class="sheet-btn-primary" style="background:var(--indigo); color:#fff;" onclick="copySyncLink()">Копировать ссылку</button>
+      </div>
+
+      <label style="font-size:0.74rem; font-weight:700; color:var(--text-secondary);">Импортировать токен:</label>
+      <input type="text" id="syncImportInput" class="ios-input" placeholder="HD_SYNC_..." oninput="previewImportKey(this.value)">
+      <button type="button" class="sheet-btn-primary" id="btnSyncApply" style="display:none;" onclick="applyImportKey()">Объединить базу</button>
+      <button type="button" class="sheet-btn-secondary" onclick="closeSheet('modalSyncSheet')">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- ШТОРКА: QR ПЕРЕНОС -->
+  <div class="sheet-scrim" id="modalQrSheet">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <h3 style="font-size:1.15rem; font-weight:800; text-align:center; margin-bottom:8px;">Офлайн QR-перенос</h3>
+      <p style="font-size:0.74rem; color:var(--text-secondary); text-align:center; margin-bottom:14px;">
+        Отсканируй этот код камерой другого устройства без сети.
+      </p>
+      <div style="display:flex; justify-content:center; margin-bottom:14px;">
+        <canvas id="qrCanvas" style="border-radius:14px; background:#fff; padding:10px;"></canvas>
+      </div>
+      <button type="button" class="sheet-btn-secondary" onclick="closeSheet('modalQrSheet')">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- ШТОРКА: РЕФЛЕКСИЯ ПРОПУСКА -->
+  <div class="sheet-scrim" id="modalSkipReason">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <h3 style="font-size:1.1rem; font-weight:800; text-align:center; margin-bottom:6px;">Честная рефлексия</h3>
+      <p style="font-size:0.74rem; color:var(--text-secondary); text-align:center; margin-bottom:12px;">Почему сегодня не получилось?</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button type="button" class="sheet-btn-secondary" style="margin:0;" onclick="selectSkipReason('Сильная усталость')">💤 Сильная усталость / болезнь</button>
+        <button type="button" class="sheet-btn-secondary" style="margin:0;" onclick="selectSkipReason('Нехватка времени')">⏱️ Аврал / нехватка времени</button>
+        <button type="button" class="sheet-btn-secondary" style="margin:0;" onclick="selectSkipReason('Сбился триггер')">💭 Сбился привычный триггер</button>
+        <button type="button" class="sheet-btn-secondary" style="margin:0;" onclick="selectSkipReason('Потеря актуальности')">🔄 Нужно снизить планку (План Б)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ШТОРКА: ДЕТАЛИ ДНЯ -->
+  <div class="sheet-scrim" id="modalDayDetail">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <h3 style="font-size:1.1rem; font-weight:800; text-align:center; margin-bottom:4px;" id="dayDetailTitle">11 ноября</h3>
+      <div style="text-align:center; font-size:0.78rem; color:var(--teal); font-weight:700; margin-bottom:12px;" id="dayDetailEnergy">Энергия: 4/5 🙂</div>
+      <div id="dayDetailHabitsList" style="display:flex; flex-direction:column; gap:6px; margin-bottom:14px;"></div>
+      <button type="button" class="sheet-btn-secondary" onclick="closeSheet('modalDayDetail')">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- ШТОРКА: СБРОС БАЗЫ -->
+  <div class="sheet-scrim" id="modalConfirmReset">
+    <div class="sheet-body">
+      <div class="sheet-handle-zone">
+        <div class="sheet-handle"></div>
+      </div>
+      <div style="font-size:2.2rem; text-align:center;">⚠️</div>
+      <h3 style="font-size:1.15rem; font-weight:800; text-align:center; margin:6px 0; color:var(--coral);">Стереть базу?</h3>
+      <p style="font-size:0.78rem; color:var(--text-secondary); text-align:center; margin-bottom:14px;">
+        Все привычки, ритуалы, стрики и аналитика будут удалены безвозвратно.
+      </p>
+      <button type="button" class="sheet-btn-primary" style="background:var(--coral); color:#fff;" onclick="executeFullReset()">Да, очистить всё</button>
+      <button type="button" class="sheet-btn-secondary" onclick="closeSheet('modalConfirmReset')">Отмена</button>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+       1. TAPTIC ENGINE (СТРОГО НОЛЬ АУДИО)
+       ========================================================= */
+    const haptic = {
+      tick() {
+        if (state.settings.haptic === 'off') return;
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          try { window.Telegram.WebApp.HapticFeedback.selectionChanged(); return; } catch(e){}
+        }
+        if (navigator.vibrate) navigator.vibrate(state.settings.haptic === 'soft' ? 4 : 6);
+      },
+      planB() {
+        if (state.settings.haptic === 'off') return;
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          try { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); return; } catch(e){}
+        }
+        if (navigator.vibrate) navigator.vibrate(state.settings.haptic === 'soft' ? 8 : 12);
+      },
+      fullNorm() {
+        if (state.settings.haptic === 'off') return;
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          try { window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); return; } catch(e){}
+        }
+        if (navigator.vibrate) navigator.vibrate([8, 20, 12]);
+      },
+      celebrate() {
+        if (state.settings.haptic === 'off') return;
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          try { window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); return; } catch(e){}
+        }
+        if (navigator.vibrate) navigator.vibrate([14, 20, 14]);
+      }
+    };
+
+    /* =========================================================
+       2. GLOBAL STATE
+       ========================================================= */
+    const STORAGE_KEY = 'HabitDiary_iOS18_OLED_v8';
+    let state = {
+      habits: [],
+      rituals: [],
+      logs: {},
+      graduated: [],
+      shields: 2,
+      selectedDateKey: '',
+      activeFilter: 'all',
+      analyticsPeriod: '7d',
+      currentTabIndex: 0,
+      isCompletedAccordionOpen: false,
+      settings: {
+        boundaryHour: 0,
+        haptic: 'standard'
+      },
+      activeSkipHabitId: null,
+      contextTargetHabitId: null,
+      undoAction: null,
+      activePlayer: {
+        ritualId: null,
+        stepIndex: 0,
+        secondsLeft: 60,
+        running: false,
+        timerId: null
+      }
+    };
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state.habits = parsed.habits || [];
+          state.rituals = parsed.rituals || [];
+          state.logs = parsed.logs || {};
+          state.graduated = parsed.graduated || [];
+          state.shields = parsed.shields !== undefined ? parsed.shields : 2;
+          state.isCompletedAccordionOpen = !!parsed.isCompletedAccordionOpen;
+          if (parsed.settings) state.settings = { ...state.settings, ...parsed.settings };
+        }
+      } catch(e) {
+        console.error('Ошибка загрузки базы', e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          habits: state.habits,
+          rituals: state.rituals,
+          logs: state.logs,
+          graduated: state.graduated,
+          shields: state.shields,
+          isCompletedAccordionOpen: state.isCompletedAccordionOpen,
+          settings: state.settings
+        }));
+      } catch(e) {
+        console.error('Ошибка сохранения базы', e);
+      }
+    }
+
+    function getTodayKey() {
+      const now = new Date();
+      if (now.getHours() < (state.settings.boundaryHour || 0)) {
+        now.setDate(now.getDate() - 1);
+      }
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    }
+
+    function computeStreak(habitId) {
+      let streak = 0;
+      let cur = new Date();
+      if (cur.getHours() < (state.settings.boundaryHour || 0)) {
+        cur.setDate(cur.getDate() - 1);
+      }
+
+      while (true) {
+        const k = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
+        const log = state.logs[k];
+        const status = log?.checks?.[habitId]?.status;
+
+        if (status === 'full' || status === 'plan_b' || log?.shielded) {
+          streak++;
+          cur.setDate(cur.getDate() - 1);
+        } else {
+          if (k === getTodayKey() && !status) {
+            cur.setDate(cur.getDate() - 1);
+            continue;
+          }
+          break;
+        }
+      }
+      return streak;
+    }
+
+    /* =========================================================
+       3. 1:1 НАХОДЧИВЫЙ NATIVE CSS SCROLL SNAP ПЛЕЕР ЭКРАНОВ
+       ========================================================= */
+    function initRealtimeViewPager() {
+      const track = document.getElementById('tabPagesSlider');
+      const pill = document.getElementById('navSliderPill');
+      let lastReportedIndex = 0;
+
+      track.addEventListener('scroll', () => {
+        const width = track.clientWidth || 1;
+        const scrollLeft = track.scrollLeft;
+        const progress = Math.max(0, Math.min(4, scrollLeft / width));
+
+        pill.style.transform = `translateX(${progress * 100}%)`;
+
+        const activeIndex = Math.round(progress);
+        if (activeIndex !== lastReportedIndex && activeIndex >= 0 && activeIndex <= 4) {
+          lastReportedIndex = activeIndex;
+          onTabChanged(activeIndex, false);
+        }
+      }, { passive: true });
+    }
+
+    function switchTab(index) {
+      if (index < 0 || index > 4) return;
+      haptic.tick();
+      const track = document.getElementById('tabPagesSlider');
+      const width = track.clientWidth || 1;
+      track.scrollTo({
+        left: index * width,
+        behavior: 'smooth'
+      });
+      onTabChanged(index, true);
+    }
+
+    function onTabChanged(index, updatePill) {
+      state.currentTabIndex = index;
+      if (updatePill) {
+        const pill = document.getElementById('navSliderPill');
+        pill.style.transform = `translateX(${index * 100}%)`;
+      }
+
+      document.querySelectorAll('.nav-tab-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === index);
+      });
+
+      const titles = ['Сегодня', 'Ритуалы', 'Анализ', 'Мастерство', 'Опции'];
+      document.getElementById('pageHeading').textContent = titles[index];
+
+      if (index !== 1 && state.activePlayer.running) {
+        document.getElementById('pipMiniPlayer').classList.add('active');
+      } else {
+        document.getElementById('pipMiniPlayer').classList.remove('active');
+      }
+
+      if (index === 1) renderRitualsList();
+      if (index === 2) updateAdvancedAnalytics();
+      if (index === 3) renderMasteryShelfPage();
+    }
+
+    /* =========================================================
+       4. PULL-TO-DISMISS MODALS С ЗАЩИТОЙ CHROME
+       ========================================================= */
+    function initPullToDismissSheets() {
+      document.querySelectorAll('.sheet-scrim').forEach(scrim => {
+        const body = scrim.querySelector('.sheet-body');
+        if (!body) return;
+
+        let startY = 0, currentY = 0, isDragging = false;
+
+        body.addEventListener('touchstart', (e) => {
+          if (body.scrollTop > 5) return;
+          startY = e.touches[0].clientY;
+          currentY = 0;
+          isDragging = true;
+          body.classList.remove('smooth-dismiss');
+        }, { passive: true });
+
+        // passive: false критичен для предотвращения pull-to-refresh
+        body.addEventListener('touchmove', (e) => {
+          if (!isDragging) return;
+          const dy = e.touches[0].clientY - startY;
+
+          if (dy > 0 && body.scrollTop <= 0) {
+            if (e.cancelable) e.preventDefault();
+            currentY = dy;
+            body.style.transform = `translate3d(0, ${dy}px, 0)`;
+            scrim.style.opacity = Math.max(0.2, 1 - (dy / 300));
+          } else {
+            currentY = 0;
+          }
+        }, { passive: false });
+
+        body.addEventListener('touchend', () => {
+          if (!isDragging) return;
+          isDragging = false;
+          body.classList.add('smooth-dismiss');
+
+          if (currentY > 80) {
+            closeSheet(scrim.id);
+            haptic.tick();
+            setTimeout(() => {
+              body.style.transform = 'translate3d(0, 0, 0)';
+              scrim.style.opacity = '1';
+            }, 260);
+          } else {
+            body.style.transform = 'translate3d(0, 0, 0)';
+            scrim.style.opacity = '1';
+          }
+        }, { passive: true });
+      });
+    }
+
+    /* =========================================================
+       5. КАРТОЧКА ПРИВЫЧКИ (ЧИСТЫЕ СВАЙПЫ С ИЗОЛЯЦИЕЙ СКРОЛЛА)
+       ========================================================= */
+    function attachHabitCardGestures(cardEl, habitId, leftLabel, rightLabel) {
+      let startX = 0, startY = 0, curX = 0, isSwiping = false, isScrolling = false;
+      let longPressTimer = null;
+
+      cardEl.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        curX = 0;
+        isSwiping = false;
+        isScrolling = false;
+        cardEl.style.transition = 'none';
+
+        longPressTimer = setTimeout(() => {
+          if (!isSwiping && !isScrolling) {
+            haptic.planB();
+            openContextMenu(habitId, e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, 360);
+      }, { passive: true });
+
+      cardEl.addEventListener('touchmove', (e) => {
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+          clearTimeout(longPressTimer);
+        }
+
+        if (isScrolling) return;
+
+        if (!isSwiping && !isScrolling) {
+          if (Math.abs(dy) > Math.abs(dx) * 0.6 || Math.abs(dy) > 12) {
+            isScrolling = true;
+            return;
+          } else if (Math.abs(dx) > 10) {
+            isSwiping = true;
+            const track = document.getElementById('tabPagesSlider');
+            if (track) track.style.overflowX = 'hidden';
+          }
+        }
+
+        if (isSwiping) {
+          curX = dx;
+          const tx = curX > 150 ? 150 + (curX - 150) * 0.2 : (curX < -110 ? -110 + (curX + 110) * 0.2 : curX);
+          cardEl.style.transform = `translate3d(${tx}px, 0, 0)`;
+
+          if (curX >= 110) {
+            leftLabel.className = 'swipe-left-label lit-full';
+            leftLabel.innerHTML = '🟢 Норма';
+          } else if (curX >= 45) {
+            leftLabel.className = 'swipe-left-label lit-planb';
+            leftLabel.innerHTML = '🟡 План Б';
+          } else {
+            leftLabel.className = 'swipe-left-label';
+            leftLabel.innerHTML = '✓ Норма / План Б';
+          }
+
+          if (curX <= -50) rightLabel.className = 'swipe-right-label lit-skip';
+          else rightLabel.className = 'swipe-right-label';
+        }
+      }, { passive: true });
+
+      cardEl.addEventListener('touchend', () => {
+        clearTimeout(longPressTimer);
+        const track = document.getElementById('tabPagesSlider');
+        if (track) track.style.overflowX = 'auto';
+        if (!isSwiping) return;
+        isSwiping = false;
+        cardEl.style.transition = 'transform 0.26s var(--spring)';
+
+        if (curX >= 110) {
+          recordHabitCheck(habitId, 'full');
+        } else if (curX >= 45) {
+          recordHabitCheck(habitId, 'plan_b');
+        } else if (curX <= -50) {
+          openSkipModal(habitId);
+        }
+
+        cardEl.style.transform = 'translate3d(0, 0, 0)';
+        setTimeout(() => {
+          leftLabel.className = 'swipe-left-label';
+          rightLabel.className = 'swipe-right-label';
+        }, 160);
+      }, { passive: true });
+    }
+
+    function recordHabitCheck(habitId, status, customVal = null) {
+      const dKey = state.selectedDateKey || getTodayKey();
+      if (!state.logs[dKey]) state.logs[dKey] = { energy: 0, gentle: false, checks: {}, shielded: false };
+      const checks = state.logs[dKey].checks;
+      const prev = checks[habitId] ? { ...checks[habitId] } : null;
+
+      if (checks[habitId]?.status === status && customVal === null) {
+        delete checks[habitId];
+        haptic.tick();
+        showIsland({ icon: '↩️', msg: 'Отметка снята' });
+      } else {
+        checks[habitId] = {
+          status: status,
+          value: customVal !== null ? customVal : (checks[habitId]?.value || 0),
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        if (status === 'full') {
+          haptic.fullNorm();
+          showIsland({
+            icon: '🟢',
+            msg: 'Обычная норма закрыта!',
+            undo: () => {
+              if (prev) checks[habitId] = prev; else delete checks[habitId];
+              saveState(); renderHabitsList(); updateCampfireUI();
+            }
+          });
+        } else if (status === 'plan_b') {
+          haptic.planB();
+          showIsland({
+            icon: '🟡',
+            msg: 'План Б сохранил серию!',
+            undo: () => {
+              if (prev) checks[habitId] = prev; else delete checks[habitId];
+              saveState(); renderHabitsList(); updateCampfireUI();
+            }
+          });
+        }
+      }
+
+      saveState();
+      renderHabitsList();
+      updateCampfireUI();
+    }
+
+    function adjustCounter(habitId, delta) {
+      const dKey = state.selectedDateKey || getTodayKey();
+      if (!state.logs[dKey]) state.logs[dKey] = { energy: 0, gentle: false, checks: {}, shielded: false };
+      const checks = state.logs[dKey].checks;
+      const cur = checks[habitId]?.value || 0;
+      const nxt = Math.max(0, cur + delta);
+      const habit = state.habits.find(h => h.id === habitId);
+      const normNum = parseFloat(habit?.norm) || 5;
+
+      let st = 'plan_b';
+      if (nxt >= normNum) st = 'full';
+      else if (nxt === 0) st = 'skip';
+
+      checks[habitId] = {
+        status: st,
+        value: nxt,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      haptic.tick();
+      saveState();
+      renderHabitsList();
+      updateCampfireUI();
+    }
+
+    /* =========================================================
+       6. РЕНДЕРИНГ СПИСКА И АККОРДЕОНА
+       ========================================================= */
+    function toggleCompletedAccordion() {
+      haptic.tick();
+      state.isCompletedAccordionOpen = !state.isCompletedAccordionOpen;
+      saveState();
+
+      const body = document.getElementById('completedAccordionBody');
+      const chev = document.getElementById('completedAccordionChevron');
+      body.classList.toggle('open', state.isCompletedAccordionOpen);
+      chev.classList.toggle('rotated', state.isCompletedAccordionOpen);
+    }
+
+    function renderHabitsList() {
+      const activeContainer = document.getElementById('habitsListActive');
+      const completedWrap = document.getElementById('completedAccordionWrap');
+      const completedBody = document.getElementById('completedAccordionBody');
+      const completedTitle = document.getElementById('completedAccordionTitle');
+      const completedChevron = document.getElementById('completedAccordionChevron');
+
+      activeContainer.innerHTML = '';
+      completedBody.innerHTML = '';
+
+      if (state.habits.length === 0) {
+        completedWrap.style.display = 'none';
+        activeContainer.innerHTML = `
+          <div class="empty-state-box">
+            <div style="font-size:3.2rem;">🌱</div>
+            <h3>Твой день чист</h3>
+            <p>Добавь первую осознанную привычку с формулой триггера и надежным Планом Б.</p>
+            <button type="button" class="sheet-btn-primary" style="display:inline-flex; width:auto; padding:0 24px;" onclick="openCreateHabitModal()">
+              + Добавить цель
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const dKey = state.selectedDateKey || getTodayKey();
+      const checks = state.logs[dKey]?.checks || {};
+
+      const filtered = state.habits.filter(h => {
+        if (state.activeFilter === 'all') return true;
+        return h.sphere === state.activeFilter;
+      });
+
+      const activeHabits = [];
+      const completedHabits = [];
+
+      filtered.forEach(h => {
+        const check = checks[h.id];
+        if (check?.status === 'full' || check?.status === 'plan_b') {
+          completedHabits.push(h);
+        } else {
+          activeHabits.push(h);
+        }
+      });
+
+      activeHabits.forEach(habit => {
+        const wrap = buildHabitCardElement(habit, checks[habit.id] || {}, false);
+        activeContainer.appendChild(wrap);
+      });
+
+      if (completedHabits.length > 0) {
+        completedWrap.style.display = 'block';
+        completedTitle.textContent = `Завершено сегодня (${completedHabits.length})`;
+        completedBody.classList.toggle('open', state.isCompletedAccordionOpen);
+        completedChevron.classList.toggle('rotated', state.isCompletedAccordionOpen);
+
+        completedHabits.forEach(habit => {
+          const wrap = buildHabitCardElement(habit, checks[habit.id] || {}, true);
+          completedBody.appendChild(wrap);
+        });
+      } else {
+        completedWrap.style.display = 'none';
+      }
+    }
+
+    function buildHabitCardElement(habit, check, isMuted) {
+      const streak = computeStreak(habit.id);
+      const st = check.status;
+
+      let statusClass = '';
+      if (st === 'full') statusClass = 'status-full';
+      else if (st === 'plan_b') statusClass = 'status-plan_b';
+      else if (st === 'skip') statusClass = 'status-skip';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'habit-swipe-wrap';
+      if (isMuted) wrap.style.opacity = '0.85';
+
+      wrap.innerHTML = `
+        <div class="swipe-backdrop-indicator">
+          <span class="swipe-left-label">✓ Норма / План Б</span>
+          <span class="swipe-right-label">Пропуск ✕</span>
+        </div>
+        <div class="habit-card ${statusClass}">
+          <div class="habit-top-row">
+            <div class="habit-lead">
+              <div class="habit-icon-squircle">${habit.icon || '🎯'}</div>
+              <div class="habit-title-box">
+                <div class="habit-name">
+                  ${habit.isIncognito ? '🔒 Личный ритуал' : escapeHtml(habit.title)}
+                  ${habit.isKeystone ? '<span style="color:var(--gold);">👑</span>' : ''}
+                  <span class="habit-sphere-tag">${escapeHtml(habit.sphere || 'Фокус')}</span>
+                </div>
+                <div class="habit-trigger-line">
+                  <em>После:</em> <strong>${escapeHtml(habit.trigger)}</strong>
+                </div>
+              </div>
+            </div>
+            <div class="streak-badge">🔥 ${streak} дн</div>
+          </div>
+
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.64rem; font-weight:700; color:var(--text-tertiary); margin-bottom:2px;">
+              <span>До автоматизма</span>
+              <span>${streak} / 60 дней</span>
+            </div>
+            <div class="mastery-progress-track">
+              <div class="mastery-progress-fill" style="width:${Math.min(100, (streak / 60) * 100)}%;"></div>
+            </div>
+          </div>
+
+          <div class="plan-b-pill">
+            <span>🟡 План Б:</span>
+            <strong>${escapeHtml(habit.planB)}</strong>
+            <span style="opacity:0.6; font-size:0.68rem; margin-left:auto;">Норма: ${escapeHtml(habit.norm)}</span>
+          </div>
+
+          ${habit.type === 'counter' ? `
+            <div class="counter-controls-inline">
+              <button type="button" class="counter-btn-mini" onclick="adjustCounter('${habit.id}', -1)">−</button>
+              <span style="font-size:0.8rem; font-weight:800; color:#fff;">${check.value || 0} / ${escapeHtml(habit.norm)}</span>
+              <button type="button" class="counter-btn-mini" onclick="adjustCounter('${habit.id}', 1)">+</button>
+            </div>
+          ` : ''}
+
+          <div class="card-swipe-hint-bar">
+            <span>→ Свайп: Короткий (План Б) / Длинный (Норма)</span>
+            <span>Свайп: Пропуск ←</span>
+          </div>
+        </div>
+      `;
+
+      const cardEl = wrap.querySelector('.habit-card');
+      const leftLabel = wrap.querySelector('.swipe-left-label');
+      const rightLabel = wrap.querySelector('.swipe-right-label');
+      attachHabitCardGestures(cardEl, habit.id, leftLabel, rightLabel);
+
+      return wrap;
+    }
+
+    /* =========================================================
+       7. НАДЕЖНОЕ СОЗДАНИЕ ПРИВЫЧКИ И РИТУАЛА
+       ========================================================= */
+    function openCreateHabitModal() {
+      haptic.planB();
+      document.getElementById('habitTitleInput').value = '';
+      document.getElementById('habitIconInput').value = '🌱';
+      document.getElementById('habitTriggerInput').value = '';
+      document.getElementById('habitNormInput').value = '';
+      document.getElementById('habitPlanBInput').value = '';
+      document.getElementById('habitCapsuleInput').value = '';
+      document.getElementById('habitKeystoneCheck').checked = false;
+      document.getElementById('habitIncognitoCheck').checked = false;
+      openSheet('modalHabitForm');
+      setTimeout(() => document.getElementById('habitTitleInput').focus(), 150);
+    }
+
+    function saveHabitForm() {
+      const titleInput = document.getElementById('habitTitleInput');
+      const title = titleInput.value.trim();
+      if (!title) {
+        showIsland({ icon: '⚠️', msg: 'Укажи название привычки' });
+        titleInput.focus();
+        return;
+      }
+      const icon = document.getElementById('habitIconInput').value.trim() || '🌱';
+      const sphere = document.getElementById('habitSphereSelect').value;
+      const type = document.getElementById('habitTypeSelect').value;
+      const trigger = document.getElementById('habitTriggerInput').value.trim() || 'Утренний ритуал';
+      const norm = document.getElementById('habitNormInput').value.trim() || '1 раз';
+      const planB = document.getElementById('habitPlanBInput').value.trim() || 'Минимум';
+      const isKeystone = document.getElementById('habitKeystoneCheck').checked;
+      const isIncognito = document.getElementById('habitIncognitoCheck').checked;
+      const capsule = document.getElementById('habitCapsuleInput').value.trim();
+
+      const newHabit = {
+        id: 'h_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        title,
+        icon,
+        sphere,
+        type,
+        trigger,
+        norm,
+        planB,
+        isKeystone,
+        isIncognito,
+        capsule,
+        createdAt: new Date().toISOString()
+      };
+
+      state.habits.push(newHabit);
+      saveState();
+      closeSheet('modalHabitForm');
+
+      if (state.currentTabIndex !== 0) {
+        switchTab(0);
+      }
+
+      renderHabitsList();
+      updateCampfireUI();
+      haptic.fullNorm();
+      showIsland({ icon: '🌱', msg: 'Привычка сохранена!' });
+    }
+
+    function openCreateRitualModal() {
+      haptic.planB();
+      document.getElementById('ritualTitleInput').value = '';
+      document.getElementById('ritualIconInput').value = '🌅';
+      document.getElementById('ritualStepsBuilderList').innerHTML = '';
+      addRitualStepField('Стакан воды', 1);
+      addRitualStepField('Разминка', 7);
+      openSheet('modalRitualForm');
+    }
+
+    function addRitualStepField(defTitle = '', defMin = 3) {
+      const list = document.getElementById('ritualStepsBuilderList');
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.gap = '8px';
+      row.innerHTML = `
+        <input type="text" class="ios-input step-title" placeholder="Действие" value="${defTitle}" style="margin:0; flex:3;">
+        <input type="number" class="ios-input step-min" placeholder="Мин" value="${defMin}" min="1" max="120" style="margin:0; flex:1;">
+        <button type="button" class="sheet-btn-secondary" style="flex:none; width:38px; height:46px; margin:0; color:var(--coral);" onclick="this.parentElement.remove()">✕</button>
+      `;
+      list.appendChild(row);
+    }
+
+    function saveRitualForm() {
+      const title = document.getElementById('ritualTitleInput').value.trim();
+      if (!title) {
+        showIsland({ icon: '⚠️', msg: 'Укажи название ритуала' });
+        return;
+      }
+      const icon = document.getElementById('ritualIconInput').value.trim() || '🌅';
+      const steps = [];
+
+      document.querySelectorAll('#ritualStepsBuilderList > div').forEach(row => {
+        const stTitle = row.querySelector('.step-title').value.trim();
+        const stMin = parseInt(row.querySelector('.step-min').value) || 1;
+        if (stTitle) steps.push({ title: stTitle, minutes: stMin });
+      });
+
+      if (steps.length === 0) {
+        showIsland({ icon: '⚠️', msg: 'Добавь хотя бы один шаг' });
+        return;
+      }
+
+      state.rituals.push({
+        id: 'rit_' + Date.now(),
+        title,
+        icon,
+        steps
+      });
+
+      saveState();
+      closeSheet('modalRitualForm');
+      renderRitualsList();
+      haptic.fullNorm();
+      showIsland({ icon: '🌅', msg: 'Ритуал сохранен' });
+    }
+
+    /* =========================================================
+       8. АНАЛИТИКА
+       ========================================================= */
+    function setAnalyticsPeriod(p, btn) {
+      haptic.tick();
+      state.analyticsPeriod = p;
+      document.querySelectorAll('.period-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateAdvancedAnalytics();
+    }
+
+    function updateAdvancedAnalytics() {
+      const dates = getPeriodDateKeys(state.analyticsPeriod);
+      let totalPlans = 0, fullDone = 0, planBDone = 0, skips = 0, savedDays = 0;
+      let totalEnergy = 0, energyCount = 0;
+      const weekdayCounts = [0, 0, 0, 0, 0, 0, 0];
+      const weekdayTotals = [0, 0, 0, 0, 0, 0, 0];
+      const skipReasons = {};
+      const habitPerformance = {};
+
+      state.habits.forEach(h => {
+        habitPerformance[h.id] = { total: 0, done: 0, title: h.title, icon: h.icon };
+      });
+
+      dates.forEach(dKey => {
+        const log = state.logs[dKey];
+        const dObj = new Date(dKey);
+        const wDay = dObj.getDay();
+
+        if (log?.energy) {
+          totalEnergy += log.energy;
+          energyCount++;
+        }
+
+        let daySaved = false;
+        state.habits.forEach(h => {
+          totalPlans++;
+          weekdayTotals[wDay]++;
+          habitPerformance[h.id].total++;
+
+          const check = log?.checks?.[h.id];
+          if (check?.status === 'full') {
+            fullDone++;
+            weekdayCounts[wDay]++;
+            habitPerformance[h.id].done++;
+          } else if (check?.status === 'plan_b') {
+            planBDone++;
+            daySaved = true;
+            weekdayCounts[wDay]++;
+            habitPerformance[h.id].done++;
+          } else if (check?.status === 'skip') {
+            skips++;
+            const r = check.reason || 'Без причины';
+            skipReasons[r] = (skipReasons[r] || 0) + 1;
+          }
+        });
+
+        if (daySaved) savedDays++;
+      });
+
+      const totalCompleted = fullDone + planBDone;
+      const rate = totalPlans > 0 ? Math.round((totalCompleted / totalPlans) * 100) : 0;
+      document.getElementById('metricSuccessRate').textContent = `${rate}%`;
+      document.getElementById('metricSavedDays').textContent = savedDays;
+      document.getElementById('metricAvgEnergy').textContent = energyCount > 0 ? (totalEnergy / energyCount).toFixed(1) : '—';
+      document.getElementById('metricRatioNorm').textContent = `${fullDone}/${planBDone}`;
+
+      renderAnnualHeatmapGrid();
+      renderWeekdayChart(weekdayCounts, weekdayTotals);
+      renderHabitResilience(habitPerformance);
+      renderSkipReasonsBreakdown(skipReasons, skips);
+      calculateSuperlinkInsight(dates);
+      calculateMonthlyArchetype(rate, savedDays);
+    }
+
+    function getPeriodDateKeys(p) {
+      const keys = [];
+      const now = new Date();
+      let days = 7;
+      if (p === '30d') days = 30;
+      else if (p === 'month') days = now.getDate();
+      else if (p === 'all') days = 365;
+
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(now.getDate() - i);
+        keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+      }
+      return keys;
+    }
+
+    function renderAnnualHeatmapGrid() {
+      const grid = document.getElementById('annualHeatmapGrid');
+      grid.innerHTML = '';
+      const today = new Date();
+
+      for (let i = 363; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+        const cell = document.createElement('div');
+        cell.className = 'heat-cell-node';
+        const log = state.logs[k];
+
+        if (log?.checks) {
+          const vals = Object.values(log.checks);
+          if (vals.some(v => v.status === 'full')) cell.classList.add('status-full');
+          else if (vals.some(v => v.status === 'plan_b')) cell.classList.add('status-planb');
+        }
+
+        cell.onclick = () => openDayDetailModal(k);
+        grid.appendChild(cell);
+      }
+    }
+
+    function openDayDetailModal(dKey) {
+      haptic.tick();
+      const log = state.logs[dKey];
+      document.getElementById('dayDetailTitle').textContent = `Отчет за ${dKey}`;
+      document.getElementById('dayDetailEnergy').textContent = log?.energy ? `⚡ Уровень сил: ${log.energy}/5` : 'Энергия не отмечалась';
+
+      const list = document.getElementById('dayDetailHabitsList');
+      list.innerHTML = '';
+      if (!log?.checks || Object.keys(log.checks).length === 0) {
+        list.innerHTML = '<span style="font-size:0.75rem; color:var(--text-secondary); text-align:center;">Нет чек-инов за этот день.</span>';
+      } else {
+        Object.entries(log.checks).forEach(([hid, val]) => {
+          const h = state.habits.find(x => x.id === hid);
+          const title = h ? h.title : 'Привычка';
+          const icon = val.status === 'full' ? '🟢 Норма' : (val.status === 'plan_b' ? '🟡 План Б' : '✕ Пропуск');
+          list.innerHTML += `
+            <div style="background:var(--card-raised); padding:8px 12px; border-radius:10px; font-size:0.78rem; display:flex; justify-content:space-between;">
+              <span>${escapeHtml(title)}</span>
+              <strong>${icon}</strong>
+            </div>
+          `;
+        });
+      }
+      openSheet('modalDayDetail');
+    }
+
+    function renderWeekdayChart(counts, totals) {
+      const container = document.getElementById('weekdayBarsContainer');
+      container.innerHTML = '';
+      const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+      let maxRate = 0, bestDayIdx = 1;
+
+      days.forEach((day, idx) => {
+        const rate = totals[idx] > 0 ? Math.round((counts[idx] / totals[idx]) * 100) : 0;
+        if (rate > maxRate) { maxRate = rate; bestDayIdx = idx; }
+
+        const col = document.createElement('div');
+        col.className = 'weekday-bar-col';
+        col.innerHTML = `
+          <span style="font-size:0.6rem; color:var(--text-tertiary);">${rate}%</span>
+          <div class="weekday-bar-fill ${rate > 70 ? 'highlight' : ''}" style="height:${Math.max(6, rate * 0.6)}px;"></div>
+          <span class="weekday-bar-label">${day}</span>
+        `;
+        container.appendChild(col);
+      });
+      document.getElementById('bestWeekdayLabel').textContent = `Лучший день: ${days[bestDayIdx]}`;
+    }
+
+    function renderHabitResilience(perf) {
+      const cont = document.getElementById('habitResilienceList');
+      cont.innerHTML = '';
+      const arr = Object.values(perf);
+      if (arr.length === 0) {
+        cont.innerHTML = '<span style="font-size:0.74rem; color:var(--text-secondary);">Пока нет привычек для расчета.</span>';
+        return;
+      }
+
+      arr.forEach(item => {
+        const pct = item.total > 0 ? Math.round((item.done / item.total) * 100) : 0;
+        const isAnchor = pct >= 70;
+        cont.innerHTML += `
+          <div style="background:var(--card-raised); padding:10px 12px; border-radius:12px; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>${item.icon || '🌱'}</span>
+              <span style="font-size:0.8rem; font-weight:700;">${escapeHtml(item.title)}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:0.76rem; font-weight:800; color:${isAnchor ? 'var(--emerald)' : 'var(--amber)'};">${pct}%</span>
+              <span style="font-size:0.68rem; font-weight:800; padding:2px 6px; border-radius:6px; background:${isAnchor ? 'rgba(52,199,89,0.15)' : 'rgba(255,149,0,0.15)'}; color:${isAnchor ? 'var(--emerald)' : 'var(--amber)'};">
+                ${isAnchor ? 'Якорь' : 'Внимание'}
+              </span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function renderSkipReasonsBreakdown(reasons, totalSkips) {
+      const cont = document.getElementById('skipReasonsBreakdown');
+      cont.innerHTML = '';
+      if (totalSkips === 0) {
+        cont.innerHTML = '<span style="font-size:0.74rem; color:var(--emerald);">Ни одного пропуска за выбранный период! 🎉</span>';
+        return;
+      }
+
+      Object.entries(reasons).forEach(([r, count]) => {
+        const pct = Math.round((count / totalSkips) * 100);
+        cont.innerHTML += `
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:3px;">
+              <span>${escapeHtml(r)}</span>
+              <strong>${count} (${pct}%)</strong>
+            </div>
+            <div style="height:4px; background:var(--card-raised); border-radius:9999px; overflow:hidden;">
+              <div style="height:100%; width:${pct}%; background:var(--coral);"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function calculateSuperlinkInsight(dates) {
+      let highEnergyDone = 0, lowEnergyDone = 0, highCount = 0, lowCount = 0;
+      dates.forEach(k => {
+        const log = state.logs[k];
+        if (!log?.energy || !log?.checks) return;
+        const total = Object.keys(log.checks).length;
+        const done = Object.values(log.checks).filter(c => c.status === 'full' || c.status === 'plan_b').length;
+
+        if (log.energy >= 4) { highEnergyDone += done; highCount += total; }
+        else if (log.energy <= 2) { lowEnergyDone += done; lowCount += total; }
+      });
+
+      if (highCount > 0 && lowCount > 0) {
+        const hPct = Math.round((highEnergyDone / highCount) * 100);
+        const lPct = Math.round((lowEnergyDone / lowCount) * 100);
+        const diff = hPct - lPct;
+        document.getElementById('superlinkInsightText').innerHTML = `
+          В дни с высоким пульсом сил твоя продуктивность на <strong>${Math.max(5, diff)}% выше</strong>. План Б спасает серию при упадке энергии!
+        `;
+      } else {
+        document.getElementById('superlinkInsightText').textContent = 'Отмечай ежедневный уровень энергии 1-5, чтобы выявить прямую связь с дисциплиной.';
+      }
+    }
+
+    function calculateMonthlyArchetype(rate, saved) {
+      let title = 'Хранитель ритма 🛡️';
+      let desc = 'Ты виртуозно сохраняешь непрерывность серии благодаря спасительному Плану Б.';
+
+      if (rate >= 85) {
+        title = 'Несокрушимый мастер ⚡';
+        desc = 'Твоя дисциплина близка к эталону. Привычки переходят в глубокий автоматизм.';
+      } else if (saved >= 4) {
+        title = 'Мастер компромиссов 🧘';
+        desc = 'Главное — не идеальность, а непрерывность. План Б спас твой ритм в ключевые моменты.';
+      }
+      document.getElementById('archetypeTitle').textContent = title;
+      document.getElementById('archetypeDesc').textContent = desc;
+    }
+
+    function renderMonthlyPoster() {
+      haptic.planB();
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1440;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, 1080, 1440);
+
+      const grad = ctx.createLinearGradient(0, 0, 1080, 1440);
+      grad.addColorStop(0, 'rgba(88, 86, 214, 0.4)');
+      grad.addColorStop(0.5, 'rgba(52, 199, 89, 0.3)');
+      grad.addColorStop(1, 'rgba(255, 149, 0, 0.35)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1080, 1440);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(60, 60, 960, 1320);
+
+      ctx.fillStyle = '#34C759';
+      ctx.font = 'bold 38px -apple-system, sans-serif';
+      ctx.fillText('ДНЕВНИК ПРИВЫЧЕК • РИТМ', 110, 160);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 68px -apple-system, sans-serif';
+      ctx.fillText(document.getElementById('archetypeTitle').textContent, 110, 260);
+
+      ctx.fillStyle = '#FF9500';
+      ctx.font = 'bold 36px -apple-system, sans-serif';
+      ctx.fillText('Непрерывность важнее идеальности', 110, 350);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.font = '32px -apple-system, sans-serif';
+      ctx.fillText(`Успешность ритма: ${document.getElementById('metricSuccessRate').textContent}`, 110, 480);
+      ctx.fillText(`Дней удержано Планом Б: ${document.getElementById('metricSavedDays').textContent}`, 110, 540);
+      ctx.fillText(`Средний пульс энергии: ${document.getElementById('metricAvgEnergy').textContent} / 5.0`, 110, 600);
+
+      const a = document.createElement('a');
+      a.download = `HabitDiary_Poster_${getTodayKey()}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+      showIsland({ icon: '🖼️', msg: 'Постер сохранен в память!' });
+    }
+
+    /* =========================================================
+       9. ПОЛКА МАСТЕРСТВА (60 ДНЕЙ)
+       ========================================================= */
+    function renderMasteryShelfPage() {
+      const activeCont = document.getElementById('masteryActiveList');
+      const gradCont = document.getElementById('masteryGraduatedList');
+      activeCont.innerHTML = '';
+      gradCont.innerHTML = '';
+
+      if (state.habits.length === 0) {
+        activeCont.innerHTML = '<span style="font-size:0.75rem; color:var(--text-secondary);">Нет активных привычек в работе.</span>';
+      } else {
+        state.habits.forEach(h => {
+          const streak = computeStreak(h.id);
+          const isEligible = streak >= 60;
+          const card = document.createElement('div');
+          card.style.background = 'var(--card-grouped)';
+          card.style.border = '0.5px solid var(--glass-border)';
+          card.style.boxShadow = 'var(--hairline)';
+          card.style.borderRadius = '18px';
+          card.style.padding = '14px 16px';
+
+          card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:0.9rem; font-weight:800; color:#fff;">${h.icon} ${escapeHtml(h.title)}</span>
+              <span style="font-size:0.78rem; font-weight:800; color:var(--amber);">🔥 ${streak} / 60 дн</span>
+            </div>
+            <div style="height:5px; background:var(--card-raised); border-radius:9999px; overflow:hidden; margin-bottom:12px;">
+              <div style="height:100%; width:${Math.min(100, Math.round((streak/60)*100))}%; background:linear-gradient(90deg, var(--indigo), var(--emerald));"></div>
+            </div>
+            ${isEligible ? `
+              <button type="button" class="sheet-btn-primary" style="min-height:40px; font-size:0.8rem;" onclick="graduateHabitToShelf('${h.id}')">
+                🌟 Укоренить на Полку Мастерства!
+              </button>
+            ` : `
+              <button type="button" class="sheet-btn-secondary" style="min-height:38px; font-size:0.74rem; margin:0; opacity:0.6; cursor:not-allowed;" disabled>
+                🔒 Заблокировано: нужно 60 дней (осталось ${60 - streak} дн)
+              </button>
+            `}
+          `;
+          activeCont.appendChild(card);
+        });
+      }
+
+      if (state.graduated.length === 0) {
+        gradCont.innerHTML = '<span style="font-size:0.75rem; color:var(--text-secondary);">Пока нет привычек, достигших 60-дневного рубежа.</span>';
+      } else {
+        state.graduated.forEach(g => {
+          gradCont.innerHTML += `
+            <div style="background:var(--card-grouped); border:0.5px solid var(--glass-border); border-radius:14px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.85rem; font-weight:700;">🏆 <strong>${escapeHtml(g.title)}</strong></span>
+              <span style="color:var(--gold); font-size:0.72rem; font-weight:800;">Пожизненный навык</span>
+            </div>
+          `;
+        });
+      }
+    }
+
+    function graduateHabitToShelf(habitId) {
+      const h = state.habits.find(x => x.id === habitId);
+      if (!h) return;
+      state.graduated.push({ ...h, graduatedAt: new Date().toISOString() });
+      state.habits = state.habits.filter(x => x.id !== habitId);
+      saveState();
+      renderMasteryShelfPage();
+      renderHabitsList();
+      updateCampfireUI();
+      haptic.celebrate();
+      triggerConfetti();
+      showIsland({ icon: '🏆', msg: `«${h.title}» укоренена навсегда!` });
+    }
+
+    /* =========================================================
+       10. ПЛЕЕР РИТУАЛОВ
+       ========================================================= */
+    function renderRitualsList() {
+      const cont = document.getElementById('ritualsContainer');
+      cont.innerHTML = '';
+
+      if (state.rituals.length === 0) {
+        cont.innerHTML = `
+          <div class="empty-state-box">
+            <div style="font-size:2.8rem;">🌅</div>
+            <h3>Нет цепочек ритуалов</h3>
+            <p>Объединяй утренние и вечерние шаги в один плейлист и проходи их без отвлечений.</p>
+          </div>
+        `;
+        return;
+      }
+
+      state.rituals.forEach(rit => {
+        const totalMin = rit.steps.reduce((acc, s) => acc + (parseInt(s.minutes) || 1), 0);
+        const card = document.createElement('div');
+        card.className = 'ritual-card';
+
+        let stepsHtml = rit.steps.map(s => `
+          <div class="ritual-step-item">
+            <span>${escapeHtml(s.title)}</span>
+            <span>${s.minutes} мин</span>
+          </div>
+        `).join('');
+
+        card.innerHTML = `
+          <div class="ritual-card-header">
+            <div class="ritual-title-meta">
+              <span style="font-size:1.6rem;">${rit.icon || '🌅'}</span>
+              <div>
+                <h3 style="font-size:1rem; font-weight:800; color:#fff;">${escapeHtml(rit.title)}</h3>
+                <span style="font-size:0.72rem; color:var(--text-secondary);">${rit.steps.length} шагов • ${totalMin} мин</span>
+              </div>
+            </div>
+            <button type="button" class="sheet-btn-primary" style="width:auto; padding:6px 16px; min-height:36px;" onclick="startRitualPlayer('${rit.id}')">
+              Запуск ▶
+            </button>
+          </div>
+          <div class="ritual-steps-list">${stepsHtml}</div>
+        `;
+        cont.appendChild(card);
+      });
+    }
+
+    function startRitualPlayer(ritualId) {
+      const rit = state.rituals.find(r => r.id === ritualId);
+      if (!rit || rit.steps.length === 0) return;
+
+      state.activePlayer.ritualId = ritualId;
+      state.activePlayer.stepIndex = 0;
+      state.activePlayer.secondsLeft = rit.steps[0].minutes * 60;
+      state.activePlayer.running = false;
+      clearInterval(state.activePlayer.timerId);
+
+      updatePlayerUI();
+      openSheet('modalRitualPlayer');
+      haptic.planB();
+    }
+
+    function updatePlayerUI() {
+      const rit = state.rituals.find(r => r.id === state.activePlayer.ritualId);
+      if (!rit) return;
+      const cur = rit.steps[state.activePlayer.stepIndex];
+
+      document.getElementById('playerStepCounter').textContent = `Шаг ${state.activePlayer.stepIndex + 1} из ${rit.steps.length}`;
+      document.getElementById('playerStepTitle').textContent = cur.title;
+
+      const pct = Math.round(((state.activePlayer.stepIndex + 1) / rit.steps.length) * 100);
+      document.getElementById('playerProgressBar').style.width = pct + '%';
+
+      formatPlayerDigits();
+      const next = rit.steps[state.activePlayer.stepIndex + 1];
+      document.getElementById('playerNextStepPreview').textContent = next ? `Далее: ${next.title} (${next.minutes} мин)` : 'Финальный шаг цепочки!';
+
+      document.getElementById('pipTitle').textContent = cur.title;
+      document.getElementById('pipIcon').textContent = rit.icon || '⏱️';
+    }
+
+    function togglePlayerRunning() {
+      haptic.planB();
+      const p = state.activePlayer;
+      const btn = document.getElementById('playerPlayBtn');
+      if (p.running) {
+        clearInterval(p.timerId);
+        p.running = false;
+        btn.textContent = 'Старт';
+      } else {
+        p.running = true;
+        btn.textContent = 'Пауза';
+        p.timerId = setInterval(() => {
+          if (p.secondsLeft > 0) {
+            p.secondsLeft--;
+            formatPlayerDigits();
+          } else {
+            haptic.fullNorm();
+            skipToNextStep();
+          }
+        }, 1000);
+      }
+    }
+
+    function adjustPlayerTime(delta) {
+      haptic.tick();
+      state.activePlayer.secondsLeft += delta;
+      formatPlayerDigits();
+    }
+
+    function skipToNextStep() {
+      const rit = state.rituals.find(r => r.id === state.activePlayer.ritualId);
+      if (!rit) return;
+
+      if (state.activePlayer.stepIndex < rit.steps.length - 1) {
+        state.activePlayer.stepIndex++;
+        state.activePlayer.secondsLeft = rit.steps[state.activePlayer.stepIndex].minutes * 60;
+        updatePlayerUI();
+        haptic.planB();
+      } else {
+        clearInterval(state.activePlayer.timerId);
+        state.activePlayer.running = false;
+        closeSheet('modalRitualPlayer');
+        document.getElementById('pipMiniPlayer').classList.remove('active');
+        haptic.celebrate();
+        triggerConfetti();
+        showIsland({ icon: '🎉', msg: 'Ритуал пройден!' });
+      }
+    }
+
+    function formatPlayerDigits() {
+      const s = state.activePlayer.secondsLeft;
+      const m = Math.floor(s / 60);
+      const rem = s % 60;
+      const formatted = `${String(m).padStart(2,'0')}:${String(rem).padStart(2,'0')}`;
+      document.getElementById('playerTimerDigits').textContent = formatted;
+      document.getElementById('pipTimerDigits').textContent = formatted;
+    }
+
+    /* =========================================================
+       11. УТИЛИТЫ, ДАТЫ И НАСТРОЙКИ
+       ========================================================= */
+    function setupDateScroller() {
+      const scroller = document.getElementById('dateSnapScroller');
+      scroller.innerHTML = '';
+      const today = new Date();
+
+      for (let offset = -2; offset <= 2; offset++) {
+        const d = new Date();
+        d.setDate(today.getDate() + offset);
+        const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+        const chip = document.createElement('div');
+        chip.className = 'date-chip';
+        if (offset === 0) {
+          chip.classList.add('active');
+          state.selectedDateKey = k;
+        }
+
+        const weekday = offset === 0 ? 'Сегодня' : (offset === -1 ? 'Вчера' : (offset === 1 ? 'Завтра' : d.toLocaleDateString('ru-RU', { weekday: 'short' })));
+
+        chip.innerHTML = `
+          <div class="date-chip-day">${weekday}</div>
+          <div class="date-chip-num">${d.getDate()} ${d.toLocaleDateString('ru-RU', { month: 'short' })}</div>
+        `;
+
+        chip.onclick = () => {
+          haptic.tick();
+          document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          state.selectedDateKey = k;
+          renderHabitsList();
+          updateEnergySliderUI();
+          updateCampfireUI();
+        };
+
+        scroller.appendChild(chip);
+      }
+    }
+
+    function setDailyEnergy(val) {
+      haptic.tick();
+      const k = state.selectedDateKey || getTodayKey();
+      if (!state.logs[k]) state.logs[k] = { energy: 0, gentle: false, checks: {}, shielded: false };
+      state.logs[k].energy = val;
+      saveState();
+      updateEnergySliderUI();
+    }
+
+    function updateEnergySliderUI() {
+      const k = state.selectedDateKey || getTodayKey();
+      const score = state.logs[k]?.energy || 0;
+      document.querySelectorAll('.energy-level-tab').forEach(tab => {
+        tab.classList.toggle('selected', parseInt(tab.getAttribute('data-val'), 10) === score);
+      });
+      const words = ['', 'Упадок 😴', 'Мало сил 🥱', 'В норме 😐', 'Бодрость 🙂', 'На пике сил 🔥'];
+      document.getElementById('energyWordTitle').textContent = score > 0 ? words[score] : 'Укажи уровень сил';
+    }
+
+    function updateCampfireUI() {
+      const k = state.selectedDateKey || getTodayKey();
+      const checks = state.logs[k]?.checks || {};
+      const total = state.habits.length;
+      if (total === 0) {
+        document.getElementById('campfirePctText').textContent = '0%';
+        document.getElementById('campfireFlame').classList.remove('lit');
+        return;
+      }
+      const done = state.habits.filter(h => checks[h.id]?.status === 'full' || checks[h.id]?.status === 'plan_b').length;
+      const pct = Math.round((done / total) * 100);
+      document.getElementById('campfirePctText').textContent = `${pct}%`;
+      document.getElementById('campfireFlame').classList.toggle('lit', pct > 0);
+    }
+
+    function setFilter(filt, btn) {
+      haptic.tick();
+      state.activeFilter = filt;
+      document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderHabitsList();
+    }
+
+    function openSheet(id) {
+      const sheet = document.getElementById(id);
+      if (sheet) {
+        sheet.classList.add('active');
+        window.history.pushState({ modal: id }, '');
+      }
+    }
+
+    function closeSheet(id) {
+      const sheet = document.getElementById(id);
+      if (sheet) {
+        sheet.classList.remove('active');
+      }
+    }
+
+    window.addEventListener('popstate', () => {
+      document.querySelectorAll('.sheet-scrim.active').forEach(s => s.classList.remove('active'));
+    });
+
+    function openSkipModal(habitId) {
+      haptic.planB();
+      state.activeSkipHabitId = habitId;
+      openSheet('modalSkipReason');
+    }
+
+    function selectSkipReason(reason) {
+      if (!state.activeSkipHabitId) return;
+      const k = state.selectedDateKey || getTodayKey();
+      if (!state.logs[k]) state.logs[k] = { energy: 0, gentle: false, checks: {}, shielded: false };
+      state.logs[k].checks[state.activeSkipHabitId] = {
+        status: 'skip',
+        reason: reason,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      closeSheet('modalSkipReason');
+      saveState();
+      renderHabitsList();
+      updateCampfireUI();
+      haptic.tick();
+      showIsland({ icon: '📝', msg: 'Причина зафиксирована' });
+      state.activeSkipHabitId = null;
+    }
+
+    function openShieldModal() {
+      haptic.planB();
+      document.getElementById('shieldBalanceText').textContent = `Доступно щитов: ${state.shields}. Активация защищает день от сгорания серий.`;
+      openSheet('modalShieldSheet');
+    }
+
+    function applyShieldForDate() {
+      if (state.shields <= 0) {
+        showIsland({ icon: '⚠️', msg: 'Щиты исчерпаны' });
+        return;
+      }
+      const k = state.selectedDateKey || getTodayKey();
+      if (!state.logs[k]) state.logs[k] = { energy: 0, gentle: false, checks: {}, shielded: false };
+      state.logs[k].shielded = true;
+      state.shields--;
+      saveState();
+      closeSheet('modalShieldSheet');
+      renderHabitsList();
+      document.getElementById('shieldSummarySub').textContent = `Доступно: ${state.shields} щита`;
+      haptic.fullNorm();
+      showIsland({ icon: '🛡️', msg: 'День защищен щитом!' });
+    }
+
+    function cycleHapticSetting() {
+      const map = { off: 'soft', soft: 'standard', standard: 'off' };
+      const labels = { off: 'Выключена', soft: 'Мягкая', standard: 'Стандартная' };
+      state.settings.haptic = map[state.settings.haptic] || 'standard';
+      saveState();
+      document.getElementById('hapticSettingSub').textContent = labels[state.settings.haptic];
+      haptic.tick();
+    }
+
+    function openDayBoundaryModal() {
+      haptic.planB();
+      document.getElementById('boundarySelect').value = String(state.settings.boundaryHour);
+      openSheet('modalDayBoundary');
+    }
+
+    function saveDayBoundary() {
+      state.settings.boundaryHour = parseInt(document.getElementById('boundarySelect').value, 10);
+      saveState();
+      closeSheet('modalDayBoundary');
+      document.getElementById('boundarySummarySub').textContent = state.settings.boundaryHour === 0 ? '00:00 (Полночь)' : `0${state.settings.boundaryHour}:00 утра`;
+      haptic.tick();
+    }
+
+    function openResetConfirmSheet() {
+      haptic.planB();
+      openSheet('modalConfirmReset');
+    }
+
+    function executeFullReset() {
+      localStorage.removeItem(STORAGE_KEY);
+      state.habits = [];
+      state.rituals = [];
+      state.logs = {};
+      state.graduated = [];
+      state.shields = 2;
+      closeSheet('modalConfirmReset');
+      renderHabitsList();
+      renderRitualsList();
+      updateCampfireUI();
+      haptic.planB();
+      showIsland({ icon: '🗑️', msg: 'База полностью очищена' });
+    }
+
+    function generateSyncString() {
+      const payload = { h: state.habits, r: state.rituals, l: state.logs, g: state.graduated };
+      return 'HD_SYNC_' + btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function openSyncModal() {
+      haptic.planB();
+      document.getElementById('syncTokenArea').value = generateSyncString();
+      document.getElementById('syncImportInput').value = '';
+      document.getElementById('btnSyncApply').style.display = 'none';
+      openSheet('modalSyncSheet');
+    }
+
+    function copySyncToken() {
+      const tok = generateSyncString();
+      copyText(tok, '📋 Токен скопирован!');
+    }
+
+    function copySyncLink() {
+      const tok = generateSyncString();
+      const url = `${window.location.origin}${window.location.pathname}#sync=${tok}`;
+      copyText(url, '🔗 Ссылка миграции скопирована!');
+    }
+
+    function previewImportKey(val) {
+      document.getElementById('btnSyncApply').style.display = val.trim().startsWith('HD_SYNC_') ? 'block' : 'none';
+    }
+
+    function applyImportKey() {
+      let raw = document.getElementById('syncImportInput').value.trim();
+      if (raw.startsWith('HD_SYNC_')) raw = raw.substring(8);
+      try {
+        raw = raw.replace(/-/g, '+').replace(/_/g, '/');
+        while (raw.length % 4) raw += '=';
+        const parsed = JSON.parse(decodeURIComponent(escape(atob(raw))));
+
+        if (parsed.h) {
+          parsed.h.forEach(nh => {
+            if (!state.habits.some(ex => ex.id === nh.id)) state.habits.push(nh);
+          });
+          state.rituals = [...state.rituals, ...(parsed.r || [])];
+          state.logs = { ...state.logs, ...(parsed.l || {}) };
+          state.graduated = [...state.graduated, ...(parsed.g || [])];
+
+          saveState();
+          closeSheet('modalSyncSheet');
+          renderHabitsList();
+          updateCampfireUI();
+          haptic.celebrate();
+          showIsland({ icon: '🎉', msg: 'Данные объединены!' });
+        }
+      } catch(e) {
+        showIsland({ icon: '❌', msg: 'Ошибка чтения ключа' });
+      }
+    }
+
+    function openQrModal() {
+      haptic.planB();
+      const canvas = document.getElementById('qrCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 200;
+      canvas.height = 200;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, 200, 200);
+
+      ctx.fillStyle = '#000000';
+      for (let r = 0; r < 20; r++) {
+        for (let c = 0; c < 20; c++) {
+          if ((r < 7 && c < 7) || (r < 7 && c > 12) || (r > 12 && c < 7)) {
+            ctx.fillRect(c * 10, r * 10, 10, 10);
+          } else if ((r * c) % 3 === 0) {
+            ctx.fillRect(c * 10, r * 10, 10, 10);
+          }
+        }
+      }
+      openSheet('modalQrSheet');
+    }
+
+    function exportData(format) {
+      haptic.tick();
+      let text = '', mime = 'text/plain', filename = `HabitDiary_${getTodayKey()}`;
+
+      if (format === 'json') {
+        text = JSON.stringify(state, null, 2);
+        mime = 'application/json';
+        filename += '.json';
+      } else if (format === 'markdown') {
+        text = `# Дневник Привычек\nДата: ${new Date().toLocaleDateString()}\n\n| Привычка | Сфера | Стрик | Норма | План Б |\n|---|---|---|---|---|\n`;
+        state.habits.forEach(h => {
+          text += `| ${h.title} | ${h.sphere} | ${computeStreak(h.id)} | ${h.norm} | ${h.planB} |\n`;
+        });
+        mime = 'text/markdown';
+        filename += '.md';
+      } else if (format === 'csv') {
+        text = 'Title,Sphere,Streak,Norm,PlanB\n';
+        state.habits.forEach(h => {
+          text += `"${h.title}","${h.sphere}",${computeStreak(h.id)},"${h.norm}","${h.planB}"\n`;
+        });
+        mime = 'text/csv';
+        filename += '.csv';
+      }
+
+      const blob = new Blob([text], { type: mime });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showIsland({ icon: '💾', msg: 'Файл сохранен' });
+    }
+
+    function importJsonFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (parsed.habits) {
+            state.habits = parsed.habits;
+            state.rituals = parsed.rituals || [];
+            state.logs = parsed.logs || {};
+            state.graduated = parsed.graduated || [];
+            saveState();
+            renderHabitsList();
+            renderRitualsList();
+            updateCampfireUI();
+            haptic.celebrate();
+            showIsland({ icon: '🎉', msg: 'База загружена!' });
+          }
+        } catch(err) {
+          showIsland({ icon: '❌', msg: 'Некорректный файл' });
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function showIsland({ icon = '🔥', msg = '', undo = null }) {
+      const island = document.getElementById('dynamicIsland');
+      const undoBtn = document.getElementById('islandUndoBtn');
+      document.getElementById('islandIcon').textContent = icon;
+      document.getElementById('islandMessage').textContent = msg;
+
+      state.undoAction = undo;
+      undoBtn.style.display = undo ? 'block' : 'none';
+      island.classList.remove('collapsed');
+
+      clearTimeout(window._islandTimer);
+      window._islandTimer = setTimeout(() => {
+        island.classList.add('collapsed');
+        state.undoAction = null;
+      }, 3500);
+    }
+
+    function triggerUndoAction() {
+      if (state.undoAction) {
+        state.undoAction();
+        state.undoAction = null;
+        document.getElementById('dynamicIsland').classList.add('collapsed');
+        haptic.planB();
+      }
+    }
+
+    function triggerConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+      const colors = ['#34C759', '#FF9500', '#5AC8FA', '#FFD60A', '#BF5AF2'];
+      for (let i = 0; i < 50; i++) {
+        particles.push({
+          x: canvas.width / 2,
+          y: canvas.height * 0.4,
+          vx: (Math.random() - 0.5) * 10,
+          vy: (Math.random() - 0.7) * 12,
+          size: Math.random() * 5 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: 1
+        });
+      }
+
+      let frames = 0;
+      function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let alive = false;
+        particles.forEach(p => {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.35; p.alpha -= 0.02;
+          if (p.alpha > 0) {
+            alive = true;
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.alpha;
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+          }
+        });
+        frames++;
+        if (alive && frames < 60) requestAnimationFrame(loop);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    function copyText(txt, msg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt)
+          .then(() => showIsland({ icon: '📋', msg: msg }))
+          .catch(() => fallbackCopy(txt, msg));
+      } else {
+        fallbackCopy(txt, msg);
+      }
+    }
+
+    function fallbackCopy(txt, msg) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showIsland({ icon: '📋', msg: msg });
+      } catch(e) {
+        showIsland({ icon: '📋', msg: 'Скопировано!' });
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function inspectCampfire() {
+      haptic.tick();
+      const k = state.selectedDateKey || getTodayKey();
+      const checks = state.logs[k]?.checks || {};
+      const total = state.habits.length;
+      if (total === 0) {
+        showIsland({ icon: '🌱', msg: 'Добавь первую цель' });
+        return;
+      }
+      const done = state.habits.filter(h => checks[h.id]?.status === 'full' || checks[h.id]?.status === 'plan_b').length;
+      showIsland({ icon: '🔥', msg: `Закрыто ${done} из ${total} планов` });
+    }
+
+    function openTutorialModal() {
+      haptic.planB();
+      setupSandboxCard();
+      openSheet('modalTutorial');
+    }
+
+    function setupSandboxCard() {
+      const card = document.getElementById('sandboxCard');
+      const badge = document.getElementById('sandboxFeedbackBadge');
+      let sx = 0, isDragging = false;
+
+      card.ontouchstart = (e) => {
+        sx = e.touches[0].clientX;
+        isDragging = true;
+        card.style.transition = 'none';
+      };
+
+      card.ontouchmove = (e) => {
+        if (!isDragging) return;
+        const dx = e.touches[0].clientX - sx;
+        card.style.transform = `translate3d(${dx * 0.75}px, 0, 0)`;
+
+        if (dx >= 110) {
+          badge.textContent = '🟢 Норма (длинный свайп)';
+          badge.style.color = 'var(--emerald)';
+        } else if (dx >= 45) {
+          badge.textContent = '🟡 План Б (короткий свайп)';
+          badge.style.color = 'var(--amber)';
+        } else if (dx <= -50) {
+          badge.textContent = '✕ Пропуск (свайп влево)';
+          badge.style.color = 'var(--coral)';
+        } else {
+          badge.textContent = 'Потяни влево или вправо...';
+          badge.style.color = 'var(--text-tertiary)';
+        }
+      };
+
+      card.ontouchend = () => {
+        isDragging = false;
+        card.style.transition = 'transform 0.25s var(--spring)';
+        card.style.transform = 'translate3d(0, 0, 0)';
+        haptic.tick();
+      };
+    }
+
+    function openContextMenu(habitId, x, y) {
+      state.contextTargetHabitId = habitId;
+      const menu = document.getElementById('glassContextMenu');
+      const posX = Math.min(window.innerWidth - 240, Math.max(16, x - 110));
+      const posY = Math.min(window.innerHeight - 250, Math.max(80, y - 40));
+      menu.style.left = `${posX}px`;
+      menu.style.top = `${posY}px`;
+      menu.style.display = 'flex';
+
+      function closeMenu(ev) {
+        if (!menu.contains(ev.target)) {
+          menu.style.display = 'none';
+          document.removeEventListener('touchstart', closeMenu);
+        }
+      }
+      setTimeout(() => document.addEventListener('touchstart', closeMenu), 50);
+    }
+
+    function contextAction(act) {
+      const hid = state.contextTargetHabitId;
+      document.getElementById('glassContextMenu').style.display = 'none';
+      if (!hid) return;
+
+      if (act === 'plan_b') recordHabitCheck(hid, 'plan_b');
+      else if (act === 'full') recordHabitCheck(hid, 'full');
+      else if (act === 'capsule') {
+        const h = state.habits.find(x => x.id === hid);
+        showIsland({ icon: '💌', msg: h?.capsule ? `«${h.capsule}»` : 'Капсула времени не заполнена' });
+      }
+      else if (act === 'delete') {
+        state.habits = state.habits.filter(x => x.id !== hid);
+        saveState();
+        renderHabitsList();
+        updateCampfireUI();
+        showIsland({ icon: '🗑️', msg: 'Привычка удалена' });
+      }
+    }
+
+    /* =========================================================
+       12. INITIALIZATION
+       ========================================================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+
+      if (window.Telegram && window.Telegram.WebApp) {
+        try {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+        } catch(e){}
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        const screen = document.getElementById('privacyScreen');
+        if (screen) screen.classList.toggle('active', document.hidden);
+      });
+
+      document.querySelectorAll('.sheet-scrim').forEach(s => {
+        s.addEventListener('click', (e) => {
+          if (e.target === s) closeSheet(s.id);
+        });
+      });
+
+      initRealtimeViewPager();
+      initPullToDismissSheets();
+      setupDateScroller();
+      updateEnergySliderUI();
+      renderHabitsList();
+      updateCampfireUI();
+
+      document.getElementById('shieldSummarySub').textContent = `Доступно: ${state.shields} щита`;
+      document.getElementById('boundarySummarySub').textContent = state.settings.boundaryHour === 0 ? '00:00 (Полночь)' : `0${state.settings.boundaryHour}:00 утра`;
+      const labels = { off: 'Выключена', soft: 'Мягкая', standard: 'Стандартная' };
+      document.getElementById('hapticSettingSub').textContent = labels[state.settings.haptic] || 'Стандартная';
+    });
+  </script>
+</body>
+</html>
