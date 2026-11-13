@@ -1,0 +1,162 @@
+@layer themes {
+  /* Светлая жемчужно-стеклянная тема (Frosted Pearl) */
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #EEF2F8;
+    --bg-elevated: #FFFFFF;
+    --glass-surface-1: rgba(255, 255, 255, 0.68);
+    --glass-surface-2: rgba(241, 245, 252, 0.82);
+    --glass-surface-3: rgba(255, 255, 255, 0.86);
+    --glass-surface-4: rgba(255, 255, 255, 0.94);
+    --glass-header: rgba(244, 247, 252, 0.82);
+    --glass-border: rgba(15, 23, 42, 0.09);
+    --glass-border-strong: rgba(15, 23, 42, 0.16);
+    --glass-specular: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(255, 255, 255, 0.25) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    --hairline: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    --shadow-sm: 0 4px 16px rgba(15, 23, 42, 0.06);
+    --shadow-ambient: 0 12px 30px rgba(15, 23, 42, 0.11);
+    --shadow-modal: 0 -10px 36px rgba(15, 23, 42, 0.14);
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-tertiary: #64748B;
+    --text-on-accent: #FFFFFF;
+    --emerald: #059669;
+    --emerald-glow: rgba(5, 150, 105, 0.16);
+    --amber: #D97706;
+    --amber-glow: rgba(217, 119, 6, 0.16);
+    --coral: #E11D48;
+    --coral-glow: rgba(225, 29, 72, 0.14);
+    --aurora-1: rgba(16, 185, 129, 0.16);
+    --aurora-2: rgba(56, 189, 248, 0.15);
+    --aurora-3: rgba(168, 85, 247, 0.12);
+  }
+
+  /* Настраиваемые акцентные палитры */
+  [data-accent="cyan"] {
+    --accent: #38BDF8;
+    --accent-glow: rgba(56, 189, 248, 0.24);
+  }
+
+  [data-accent="violet"] {
+    --accent: #A855F7;
+    --accent-glow: rgba(168, 85, 247, 0.24);
+  }
+
+  [data-accent="amber"] {
+    --accent: #FBBF24;
+    --accent-glow: rgba(251, 191, 36, 0.24);
+  }
+
+  /* Адаптивная плотность интерфейса */
+  [data-density="compact"] {
+    --card-pad: 12px;
+    --card-gap: 8px;
+  }
+
+  [data-density="comfortable"] {
+    --card-pad: 16px;
+    --card-gap: 12px;
+  }
+
+  /* Масштаб шрифта из настроек */
+  [data-font-scale="sm"] {
+    --font-scale: 0.92;
+  }
+
+  [data-font-scale="md"] {
+    --font-scale: 1;
+  }
+
+  [data-font-scale="lg"] {
+    --font-scale: 1.1;
+  }
+
+  /* Доступность: отключение прозрачности */
+  @media (prefers-reduced-transparency: reduce) {
+    :root {
+      --glass-surface-1: #141822;
+      --glass-surface-2: #1E2433;
+      --glass-surface-3: #11151E;
+      --glass-surface-4: #161B26;
+      --glass-header: #0B0E15;
+    }
+
+    [data-theme="light"] {
+      --glass-surface-1: #FFFFFF;
+      --glass-surface-2: #F1F5F9;
+      --glass-surface-3: #FFFFFF;
+      --glass-surface-4: #FFFFFF;
+      --glass-header: #F8FAFC;
+    }
+  }
+
+  /* Доступность: повышенная контрастность (WCAG 1.4.6) */
+  @media (prefers-contrast: more) {
+    :root {
+      --text-secondary: #DCE3F2;
+      --text-tertiary: #B8C2D8;
+      --glass-border: rgba(255, 255, 255, 0.34);
+      --glass-border-strong: rgba(255, 255, 255, 0.55);
+    }
+  }
+
+  /* Windows High Contrast / Forced Colors */
+  @media (forced-colors: active) {
+    .habit-card,
+    .section-card,
+    .modal-sheet,
+    .ios-island-navbar,
+    .habit-action-btn {
+      border: 1px solid CanvasText;
+    }
+  }
+}
+
+@layer print {
+  @media print {
+    body {
+      background: #FFFFFF !important;
+      color: #000000 !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    body::before,
+    body::after,
+    .ios-island-navbar,
+    .header-add-btn,
+    #confettiCanvas,
+    #privacyScreen,
+    .pip-docked-bar,
+    .dynamic-island {
+      display: none !important;
+    }
+
+    #app,
+    #mainContent,
+    .carousel-wrapper,
+    .carousel-pages,
+    .page {
+      height: auto !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      display: block !important;
+    }
+
+    .section-card,
+    .metric-card,
+    .habit-card {
+      background: #FFFFFF !important;
+      color: #000000 !important;
+      border: 1px solid #CBD5E1 !important;
+      box-shadow: none !important;
+      break-inside: avoid;
+      margin-bottom: 12px;
+    }
+  }
+}

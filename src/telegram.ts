@@ -1,9 +1,20 @@
+import { isTrustedTelegramOrigin } from './core/security';
+
 declare global {
   interface Window {
     Telegram?: {
       WebApp: TelegramWebApp;
     };
   }
+}
+
+export interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  language_code?: string;
+  photo_url?: string;
 }
 
 interface TelegramWebApp {
@@ -13,13 +24,7 @@ interface TelegramWebApp {
   initData: string;
   colorScheme?: 'light' | 'dark';
   initDataUnsafe: {
-    user?: {
-      id: number;
-      first_name: string;
-      last_name?: string;
-      username?: string;
-      language_code?: string;
-    };
+    user?: TelegramUser;
   };
   themeParams: {
     bg_color?: string;
@@ -34,6 +39,7 @@ interface TelegramWebApp {
   viewportStableHeight: number;
   isExpanded: boolean;
   onEvent?: (eventType: string, callback: () => void) => void;
+  shareToStory?: (mediaUrl: string, params?: { text?: string }) => void;
   BackButton: {
     show: () => void;
     hide: () => void;
@@ -73,6 +79,8 @@ class TelegramWebAppWrapper {
   private tg: TelegramWebApp | null = null;
   private hapticLastCall = 0;
   private readonly hapticThrottle = 50;
+  private hapticEnabled = true;
+  private mainButtonCallback: (() => void) | null = null;
 
   constructor() {
     try {
@@ -81,7 +89,7 @@ class TelegramWebAppWrapper {
         this.init();
       }
     } catch {
-      // Игнорируем ошибку вне Telegram
+      // Безопасный fallback вне Telegram
     }
   }
 
@@ -91,74 +99,121 @@ class TelegramWebAppWrapper {
     try {
       this.tg.ready();
       this.tg.expand();
+      this.syncViewportHeight();
       this.applyTheme();
       this.tg.onEvent?.('themeChanged', () => this.applyTheme());
+      this.tg.onEvent?.('viewportChanged', () => this.syncViewportHeight());
+
+      if (typeof window !== 'undefined') {
+        window.addEventListener('message', (ev) => {
+          if (ev.origin && !isTrustedTelegramOrigin(ev.origin)) {
+            return;
+          }
+        });
+      }
     } catch {
-      // Безопасный fallback вне Telegram
+      // ignore outside Telegram WebView
     }
   }
 
-  applyTheme(): void {
-    if (!this.tg) return;
+  setHapticEnabled(enabled: boolean): void {
+    this.hapticEnabled = enabled;
+  }
+
+  private syncViewportHeight(): void {
+    if (!this.tg || typeof document === 'undefined') return;
+    if (this.tg.viewportStableHeight > 0) {
+      document.documentElement.style.setProperty(
+        '--tg-viewport-stable-height',
+        `${this.tg.viewportStableHeight}px`
+      );
+    }
+  }
+
+  applyTheme(themeOverride: 'auto' | 'dark' | 'light' = 'auto'): void {
+    if (typeof document === 'undefined') return;
     const root = document.documentElement;
-    const params = this.tg.themeParams;
-    const isLight = this.tg.colorScheme === 'light';
 
-    if (params.bg_color) {
-      root.style.setProperty('--bg', params.bg_color);
-      const metaTheme = document.querySelector('meta[name="theme-color"]');
-      metaTheme?.setAttribute('content', params.bg_color);
-    }
-    if (params.secondary_bg_color || params.section_bg_color) {
-      root.style.setProperty('--card-grouped', params.secondary_bg_color ?? params.section_bg_color ?? '#16161A');
-    }
-    if (params.text_color) {
-      root.style.setProperty('--text-primary', params.text_color);
-    }
-    if (params.hint_color) {
-      root.style.setProperty('--text-secondary', params.hint_color);
-    }
+    const tgLight = this.tg?.colorScheme === 'light';
+    const sysLight =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-color-scheme: light)').matches;
 
-    if (isLight) {
-      root.style.setProperty('--card-raised', '#E9E9EF');
-      root.style.setProperty('--card-overlay', '#FFFFFF');
-      root.style.setProperty('--glass-nav', 'rgba(245, 245, 247, 0.92)');
-      root.style.setProperty('--glass-header', 'rgba(255, 255, 255, 0.92)');
-      root.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.08)');
-      root.style.setProperty('--hairline', 'inset 0 0.5px 0.5px rgba(0, 0, 0, 0.08)');
-      root.style.setProperty('--shadow-ambient', '0 8px 24px rgba(0, 0, 0, 0.12)');
-    }
+    const effectiveLight =
+      themeOverride === 'light' || (themeOverride === 'auto' && (this.isAvailable() ? tgLight : sysLight));
+
+    root.dataset['theme'] = effectiveLight ? 'light' : 'dark';
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    metaTheme?.setAttribute('content', effectiveLight ? '#EEF2F8' : '#07090E');
   }
 
   isAvailable(): boolean {
     return this.tg !== null && this.tg.initData.length > 0;
   }
 
+  getInitData(): string {
+    return this.tg?.initData ?? '';
+  }
+
   getUserId(): number | null {
     return this.tg?.initDataUnsafe.user?.id ?? null;
   }
 
-  getUser() {
+  getUser(): TelegramUser | null {
     return this.tg?.initDataUnsafe.user ?? null;
   }
 
-  haptic(style: 'light' | 'medium' | 'heavy' = 'light'): void {
-    if (!this.tg?.HapticFeedback) return;
-
+  haptic(style: 'light' | 'medium' | 'heavy' | 'soft' | 'rigid' = 'light'): void {
+    if (!this.hapticEnabled) return;
     const now = Date.now();
     if (now - this.hapticLastCall < this.hapticThrottle) return;
+    this.hapticLastCall = now;
 
     try {
-      this.hapticLastCall = now;
-      this.tg.HapticFeedback.impactOccurred(style);
+      if (this.tg?.HapticFeedback && this.isAvailable()) {
+        this.tg.HapticFeedback.impactOccurred(style);
+        return;
+      }
+      if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(style === 'heavy' ? 20 : style === 'medium' ? 12 : 6);
+      }
     } catch {
-      // Игнорируем ошибки haptic в обычном браузере
+      // ignore haptic failure
+    }
+  }
+
+  hapticSelection(): void {
+    if (!this.hapticEnabled) return;
+    const now = Date.now();
+    if (now - this.hapticLastCall < this.hapticThrottle) return;
+    this.hapticLastCall = now;
+    try {
+      if (this.tg?.HapticFeedback && this.isAvailable()) {
+        this.tg.HapticFeedback.selectionChanged();
+      } else if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(5);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  hapticNotification(type: 'success' | 'warning' | 'error'): void {
+    if (!this.hapticEnabled) return;
+    try {
+      if (this.tg?.HapticFeedback && this.isAvailable()) {
+        this.tg.HapticFeedback.notificationOccurred(type);
+      } else if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(type === 'error' ? [25, 40, 25] : 15);
+      }
+    } catch {
+      // ignore
     }
   }
 
   showBackButton(onClick: () => void): void {
     if (!this.tg?.BackButton) return;
-
     try {
       this.tg.BackButton.onClick(onClick);
       this.tg.BackButton.show();
@@ -169,7 +224,6 @@ class TelegramWebAppWrapper {
 
   hideBackButton(onClick?: () => void): void {
     if (!this.tg?.BackButton) return;
-
     try {
       if (onClick) {
         this.tg.BackButton.offClick(onClick);
@@ -177,6 +231,60 @@ class TelegramWebAppWrapper {
       this.tg.BackButton.hide();
     } catch {
       // ignore
+    }
+  }
+
+  showMainButton(text: string, onClick: () => void): void {
+    if (!this.tg?.MainButton || !this.isAvailable()) return;
+    try {
+      if (this.mainButtonCallback) {
+        this.tg.MainButton.offClick(this.mainButtonCallback);
+      }
+      let locked = false;
+      this.mainButtonCallback = () => {
+        if (locked) return;
+        locked = true;
+        try {
+          onClick();
+        } finally {
+          setTimeout(() => {
+            locked = false;
+          }, 400);
+        }
+      };
+      this.tg.MainButton.setText(text);
+      this.tg.MainButton.onClick(this.mainButtonCallback);
+      this.tg.MainButton.enable();
+      this.tg.MainButton.show();
+    } catch {
+      // ignore
+    }
+  }
+
+  hideMainButton(): void {
+    if (!this.tg?.MainButton) return;
+    try {
+      if (this.mainButtonCallback) {
+        this.tg.MainButton.offClick(this.mainButtonCallback);
+        this.mainButtonCallback = null;
+      }
+      this.tg.MainButton.hide();
+    } catch {
+      // ignore
+    }
+  }
+
+  canShareToStory(): boolean {
+    return Boolean(this.tg?.shareToStory && this.isAvailable());
+  }
+
+  shareToStory(mediaUrl: string, caption?: string): boolean {
+    if (!this.tg?.shareToStory) return false;
+    try {
+      this.tg.shareToStory(mediaUrl, caption ? { text: caption } : undefined);
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -189,8 +297,7 @@ class TelegramWebAppWrapper {
   }
 
   async cloudStorageSet(key: string, value: string): Promise<boolean> {
-    if (!this.tg?.CloudStorage) return false;
-
+    if (!this.tg?.CloudStorage || !this.isAvailable()) return false;
     return new Promise((resolve) => {
       try {
         this.tg!.CloudStorage.setItem(key, value, (error, success) => {
@@ -203,8 +310,7 @@ class TelegramWebAppWrapper {
   }
 
   async cloudStorageGet(key: string): Promise<string | null> {
-    if (!this.tg?.CloudStorage) return null;
-
+    if (!this.tg?.CloudStorage || !this.isAvailable()) return null;
     return new Promise((resolve) => {
       try {
         this.tg!.CloudStorage.getItem(key, (error, value) => {

@@ -1,5 +1,10 @@
+@layer tokens, base, aurora, surfaces, layout, components, animations, themes, print;
+
 @import './tokens.css';
 @import './base.css';
+@import './aurora.css';
+@import './surfaces.css';
 @import './layout.css';
-@import './animations.css';
 @import './components.css';
+@import './animations.css';
+@import './themes.css';

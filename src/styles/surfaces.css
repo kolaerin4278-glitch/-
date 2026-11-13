@@ -1,0 +1,88 @@
+@layer surfaces {
+  .glass-surface-1,
+  .glass-card,
+  .habit-card,
+  .section-card,
+  .campfire-bar,
+  .energy-card,
+  .metric-card {
+    position: relative;
+    background: var(--glass-surface-1);
+    background-image: var(--glass-specular);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm), var(--hairline);
+  }
+
+  .glass-surface-2 {
+    background: var(--glass-surface-2);
+    border: 1px solid var(--glass-border);
+  }
+
+  .glass-surface-3 {
+    background: var(--glass-surface-3);
+    border: 1px solid var(--glass-border-strong);
+    box-shadow: var(--shadow-ambient), var(--hairline);
+  }
+
+  .glass-surface-4 {
+    background: var(--glass-surface-4);
+    border: 1px solid var(--glass-border-strong);
+    box-shadow: var(--shadow-modal), var(--hairline);
+  }
+
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-surface-1,
+    .glass-card,
+    .habit-card,
+    .section-card,
+    .campfire-bar,
+    .energy-card,
+    .metric-card {
+      backdrop-filter: var(--blur-1);
+      -webkit-backdrop-filter: var(--blur-1);
+    }
+
+    .glass-surface-2 {
+      backdrop-filter: var(--blur-2);
+      -webkit-backdrop-filter: var(--blur-2);
+    }
+
+    .glass-surface-3,
+    .ios-island-navbar,
+    .pip-docked-bar {
+      backdrop-filter: var(--blur-3);
+      -webkit-backdrop-filter: var(--blur-3);
+    }
+
+    .glass-surface-4,
+    .modal-sheet,
+    .glass-context-menu {
+      backdrop-filter: var(--blur-4);
+      -webkit-backdrop-filter: var(--blur-4);
+    }
+  }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-surface-1,
+    .glass-card,
+    .habit-card,
+    .section-card,
+    .campfire-bar,
+    .energy-card,
+    .metric-card {
+      background: #141824;
+    }
+
+    .modal-sheet,
+    .ios-island-navbar {
+      background: #1B2030;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .habit-card:hover,
+    .metric-card:hover {
+      border-color: var(--glass-border-strong);
+    }
+  }
+}
