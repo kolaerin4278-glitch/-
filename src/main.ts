@@ -26,11 +26,7 @@ class App {
 
   private init(): void {
     this.updateHeaderDate();
-
-    storage.subscribe(() => {
-      this.render();
-    });
-
+    storage.subscribe(() => { this.render(); });
     this.setupNavigation();
     this.setupAddHabitButton();
     this.setupSwipeManager();
@@ -48,7 +44,6 @@ class App {
   private updateHeaderDate(): void {
     const dateLabel = document.getElementById('headerDateLabel');
     if (!dateLabel) return;
-
     const { dayBoundaryHour } = storage.getState().settings;
     const today = fromDateKey(getTodayKey(dayBoundaryHour));
     dateLabel.textContent = formatDate(today);
@@ -63,7 +58,6 @@ class App {
       const rect = btn.getBoundingClientRect();
       const parentRect = btn.parentElement.getBoundingClientRect();
       const left = rect.left - parentRect.left;
-
       navPill.style.width = `${rect.width}px`;
       navPill.style.height = `${rect.height}px`;
       navPill.style.transform = `translateX(${left}px)`;
@@ -74,10 +68,8 @@ class App {
       button.addEventListener('click', () => {
         const tab = button.dataset.tab;
         if (!tab) return;
-
         telegram.haptic('light');
         this.switchTab(tab);
-
         navButtons.forEach((b) => {
           b.classList.remove('active');
           b.setAttribute('aria-selected', 'false');
@@ -96,7 +88,6 @@ class App {
 
   private switchTab(tab: string): void {
     this.currentTab = tab;
-
     const heading = document.getElementById('pageHeading');
     if (heading) {
       const titles: Record<string, string> = {
@@ -108,14 +99,12 @@ class App {
       };
       heading.textContent = titles[tab] ?? 'Дневник привычек';
     }
-
     this.render();
   }
 
   private setupAddHabitButton(): void {
     const btn = document.getElementById('addHabitBtn');
     if (!btn) return;
-
     btn.addEventListener('click', () => {
       telegram.haptic('medium');
       this.openHabitModal();
@@ -125,8 +114,7 @@ class App {
   private setupSwipeManager(): void {
     const container = document.getElementById('carouselPages');
     if (!container) return;
-
-    this.swipeManager = new SwipeManager(container, (habitId: string, direction: SwipeDirection) => {
+    new SwipeManager(container, (habitId: string, direction: SwipeDirection) => {
       if (this.currentTab !== 'today') return;
       if (direction === 'right-long') {
         this.recordHabitStatus(habitId, STATUS.FULL);
@@ -192,7 +180,6 @@ class App {
   private recordHabitStatus(habitId: string, status: Status): void {
     const state = storage.getState();
     const todayKey = getTodayKey(state.settings.dayBoundaryHour);
-
     telegram.haptic('medium');
     storage.setCheck(habitId, todayKey, {
       status,
@@ -218,7 +205,6 @@ class App {
   private render(): void {
     const container = document.getElementById('carouselPages');
     if (!container) return;
-
     if (this.currentTab === 'today') {
       this.renderTodayPage(container);
     } else if (this.currentTab === 'rituals') {
@@ -248,21 +234,12 @@ class App {
     });
     const campfirePct = habits.length > 0 ? Math.round((doneToday / habits.length) * 100) : 0;
 
-    const filterOptions: Array<{ id: 'all' | Sphere; label: string }> = [
-      { id: 'all', label: 'Все' },
-      { id: SPHERES.BODY, label: SPHERES.BODY },
-      { id: SPHERES.MIND, label: SPHERES.MIND },
-      { id: SPHERES.WORK, label: SPHERES.WORK },
-      { id: SPHERES.SPIRIT, label: SPHERES.SPIRIT }
-    ];
-
     const toolbarHTML = `
       <div class="today-toolbar">
         <div class="campfire-bar">
           <div class="campfire-title">🔥 Костёр дня (${doneToday}/${habits.length})</div>
           <div class="campfire-pct">${campfirePct}%</div>
         </div>
-
         <div class="energy-card">
           <div class="energy-header">
             <span>Энергия сегодня</span>
@@ -280,9 +257,14 @@ class App {
               .join('')}
           </div>
         </div>
-
         <div class="filter-bar" role="group" aria-label="Фильтр по сферам">
-          ${filterOptions
+          ${[
+            { id: 'all', label: 'Все' },
+            { id: SPHERES.BODY, label: SPHERES.BODY },
+            { id: SPHERES.MIND, label: SPHERES.MIND },
+            { id: SPHERES.WORK, label: SPHERES.WORK },
+            { id: SPHERES.SPIRIT, label: SPHERES.SPIRIT }
+          ]
             .map(
               (f) => `
                 <button type="button" class="filter-pill ${this.activeSphere === f.id ? 'active' : ''}" data-sphere="${escapeHtml(f.id)}">
@@ -295,29 +277,13 @@ class App {
       </div>
     `;
 
-    const visibleHabits =
-      this.activeSphere === 'all' ? habits : habits.filter((h) => h.sphere === this.activeSphere);
+    const visibleHabits = this.activeSphere === 'all' ? habits : habits.filter((h) => h.sphere === this.activeSphere);
 
     if (visibleHabits.length === 0) {
-      const emptyMsg =
-        habits.length === 0
-          ? 'Добавь первую привычку кнопкой «+» в шапке, чтобы начать формировать систему с Планом Б'
-          : 'В этой сфере пока нет привычек';
-
-      container.innerHTML = `
-        <div class="page">
-          ${toolbarHTML}
-          <div class="empty-state">
-            <div class="empty-state-icon">🌱</div>
-            <div class="empty-state-text">${emptyMsg}</div>
-          </div>
-        </div>
-      `;
+      container.innerHTML = `<div class="page">${toolbarHTML}<div class="empty-state"><div class="empty-state-icon">🌱</div><div class="empty-state-text">${habits.length === 0 ? 'Добавь привычки' : 'В этой сфере пусто'}</div></div></div>`;
       this.setupTodayToolbarHandlers();
       return;
     }
-
-    const lowEnergy = currentEnergy > 0 && currentEnergy <= 2;
 
     const habitCards = visibleHabits
       .map((habit) => {
@@ -325,17 +291,6 @@ class App {
         const streak = computeStreak(habit, state.checks, state.logs, todayKey);
         const isDone = check?.status === STATUS.FULL || check?.status === STATUS.PLAN_B;
         const isSkipped = check?.status === STATUS.SKIP;
-        // isDone используется в логике отображения badges ниже
-        const isDone = check?.status === STATUS.FULL || check?.status === STATUS.PLAN_B;
-
-        const statusBadge =
-          check?.status === STATUS.FULL
-            ? '<span class="streak-badge">✓ Норма</span>'
-            : check?.status === STATUS.PLAN_B
-              ? '<span class="plan-b-pill">🟡 План Б</span>'
-              : isSkipped
-                ? '<span class="skip-pill">✕ Пропуск</span>'
-                : '';
 
         return `
           <div class="habit-card" data-habit-id="${escapeHtml(habit.id)}">
@@ -351,18 +306,17 @@ class App {
               </div>
               <button type="button" class="habit-edit-btn" data-edit-habit="${escapeHtml(habit.id)}" aria-label="Редактировать">✎</button>
             </div>
-
             ${
               isDone || isSkipped
                 ? `
               <div class="habit-completed">
-                ${statusBadge}
+                ${check?.status === STATUS.FULL ? '<span class="streak-badge">✓ Норма</span>' : check?.status === STATUS.PLAN_B ? '<span class="plan-b-pill">🟡 План Б</span>' : '<span class="skip-pill">✕ Пропуск</span>'}
                 <button type="button" class="undo-inline-btn" data-undo-habit="${escapeHtml(habit.id)}">Отменить</button>
               </div>
             `
                 : `
               <div class="habit-actions">
-                <button type="button" class="habit-action-btn ${lowEnergy ? 'amber' : ''}" data-action="planb">
+                <button type="button" class="habit-action-btn ${currentEnergy > 0 && currentEnergy <= 2 ? 'amber' : ''}" data-action="planb">
                   ${escapeHtml(habit.planB || 'План Б')}
                 </button>
                 <button type="button" class="habit-action-btn primary" data-action="full">
@@ -379,13 +333,7 @@ class App {
       })
       .join('');
 
-    container.innerHTML = `
-      <div class="page">
-        ${toolbarHTML}
-        ${habitCards}
-      </div>
-    `;
-
+    container.innerHTML = `<div class="page">${toolbarHTML}${habitCards}</div>`;
     this.setupTodayToolbarHandlers();
     this.setupHabitActions();
   }
@@ -394,24 +342,16 @@ class App {
     document.querySelectorAll('.energy-level-tab').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         const lvl = Number((e.currentTarget as HTMLElement).dataset.energy ?? 0);
-        if (!lvl) return;
         const state = storage.getState();
         const todayKey = getTodayKey(state.settings.dayBoundaryHour);
-        const prev = storage.getDayLog(todayKey);
-
         telegram.haptic('light');
-        storage.setDayLog(todayKey, {
-          date: todayKey,
-          energy: lvl,
-          shielded: prev?.shielded ?? false
-        });
+        storage.setDayLog(todayKey, { date: todayKey, energy: lvl, shielded: storage.getDayLog(todayKey)?.shielded ?? false });
       });
     });
 
     document.querySelectorAll('.filter-pill').forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        const sphere = (e.currentTarget as HTMLElement).dataset.sphere as 'all' | Sphere | undefined;
-        if (!sphere) return;
+        const sphere = (e.currentTarget as HTMLElement).dataset.sphere as 'all' | Sphere;
         telegram.haptic('light');
         this.activeSphere = sphere;
         this.render();
@@ -426,30 +366,23 @@ class App {
         const card = button.closest('.habit-card') as HTMLElement | null;
         const habitId = card?.dataset.habitId;
         const action = button.dataset.action;
-
         if (!habitId || !action) return;
-
         const status = action === 'full' ? STATUS.FULL : action === 'planb' ? STATUS.PLAN_B : STATUS.SKIP;
         this.recordHabitStatus(habitId, status);
       });
     });
-
     document.querySelectorAll('[data-undo-habit]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         const habitId = (e.currentTarget as HTMLElement).dataset.undoHabit;
         if (!habitId) return;
-        const todayKey = getTodayKey(storage.getState().settings.dayBoundaryHour);
-        telegram.haptic('light');
-        storage.clearCheck(habitId, todayKey);
+        storage.clearCheck(habitId, getTodayKey(storage.getState().settings.dayBoundaryHour));
         this.showIsland('Отметка снята');
       });
     });
-
     document.querySelectorAll('[data-edit-habit]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         const habitId = (e.currentTarget as HTMLElement).dataset.editHabit;
         if (!habitId) return;
-        telegram.haptic('light');
         this.openHabitModal(habitId);
       });
     });
@@ -471,41 +404,18 @@ class App {
 
     document.getElementById('createRitualBtn')?.addEventListener('click', () => {
       modalManager.open(
-        `
-        <form id="ritualForm" class="habit-form">
-          <h3 class="modal-title">Новый ритуал</h3>
-          <label class="form-field">
-            <span>Название</span>
-            <input type="text" name="title" maxlength="80" placeholder="Вечернее восстановление" required>
-          </label>
-          <label class="form-field">
-            <span>Шаг 1</span>
-            <input type="text" name="step1" maxlength="80" placeholder="Убрать телефон" required>
-          </label>
-          <label class="form-field">
-            <span>Длительность (минут)</span>
-            <input type="number" name="min1" min="1" max="120" value="5" inputmode="numeric" required>
-          </label>
-          <button type="submit" class="habit-action-btn primary">Создать ритуал</button>
-        </form>
-      `,
+        `<form id="ritualForm" class="habit-form"><h3 class="modal-title">Новый ритуал</h3><label class="form-field"><span>Название</span><input type="text" name="title" maxlength="80" placeholder="Вечернее восстановление" required></label><label class="form-field"><span>Шаг 1</span><input type="text" name="step1" maxlength="80" placeholder="Убрать телефон" required></label><label class="form-field"><span>Длительность (мин)</span><input type="number" name="min1" min="1" max="120" value="5" required></label><button type="submit" class="habit-action-btn primary">Создать</button></form>`,
         (container) => {
-          const form = container.querySelector('#ritualForm') as HTMLFormElement | null;
-          form?.addEventListener('submit', (e) => {
+          container.querySelector('#ritualForm')?.addEventListener('submit', (e) => {
             e.preventDefault();
-            const fd = new FormData(form);
-            const title = String(fd.get('title') ?? '').trim();
-            const step1 = String(fd.get('step1') ?? '').trim();
-            const min1 = Math.max(1, Math.min(120, Number(fd.get('min1') ?? 5)));
-            if (!title || !step1) return;
-
+            const fd = new FormData(e.target as HTMLFormElement);
             storage.addRitual({
-              title,
+              title: String(fd.get('title')),
               icon: '🔗',
-              steps: [{ title: step1, minutes: min1, order: 0 }]
+              steps: [{ title: String(fd.get('step1')), minutes: Number(fd.get('min1')), order: 0 }]
             });
             modalManager.close();
-            this.showIsland('Ритуал создан ✓');
+            this.showIsland('Ритуал создан');
           });
         }
       );
@@ -515,27 +425,10 @@ class App {
       btn.addEventListener('click', (e) => {
         const id = (e.currentTarget as HTMLElement).dataset.startRitual;
         const ritual = storage.getRituals().find((r) => r.id === id);
-        const firstStep = ritual?.steps[0];
-        if (!ritual || !firstStep) return;
-
-        this.ritualSession = {
-          ritual,
-          stepIndex: 0,
-          stepEndTimestamp: Date.now() + firstStep.minutes * 60_000,
-          pausedRemainingMs: null
-        };
-        telegram.haptic('medium');
+        if (!ritual) return;
+        this.ritualSession = { ritual, stepIndex: 0, stepEndTimestamp: Date.now() + ritual.steps[0].minutes * 60_000, pausedRemainingMs: null };
         this.render();
         this.startRitualLoop();
-      });
-    });
-
-    document.querySelectorAll('[data-delete-ritual]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        const id = (e.currentTarget as HTMLElement).dataset.deleteRitual;
-        if (!id) return;
-        storage.deleteRitual(id);
-        this.showIsland('Ритуал удалён');
       });
     });
 
@@ -543,23 +436,12 @@ class App {
       btn.addEventListener('click', (e) => {
         const action = (e.currentTarget as HTMLElement).dataset.ritualAction;
         if (!this.ritualSession || !action) return;
-
         if (action === 'stop') {
           this.stopRitualSession();
-          this.render();
-        } else if (action === 'toggle-pause') {
-          if (this.ritualSession.pausedRemainingMs !== null) {
-            this.ritualSession.stepEndTimestamp = Date.now() + this.ritualSession.pausedRemainingMs;
-            this.ritualSession.pausedRemainingMs = null;
-            this.startRitualLoop();
-          } else {
-            this.ritualSession.pausedRemainingMs = Math.max(0, this.ritualSession.stepEndTimestamp - Date.now());
-            this.stopRitualLoop();
-          }
-          this.render();
         } else if (action === 'next-step') {
           this.advanceRitualStep();
         }
+        this.render();
       });
     });
   }
@@ -574,19 +456,36 @@ class App {
         return;
       }
       const digits = document.getElementById('ritualTimerDigits');
-      if (digits) {
-        digits.textContent = formatDuration(remaining);
-      }
+      if (digits) digits.textContent = formatDuration(remaining);
       this.ritualRafId = requestAnimationFrame(tick);
     };
     this.ritualRafId = requestAnimationFrame(tick);
   }
 
   private stopRitualLoop(): void {
-    if (this.ritualRafId !== null) {
-      cancelAnimationFrame(this.ritualRafId);
-      this.ritualRafId = null;
+    if (this.ritualRafId !== null) cancelAnimationFrame(this.ritualRafId);
+    this.ritualRafId = null;
+  }
+
+  private advanceRitualStep(): void {
+    if (!this.ritualSession) return;
+    const nextIdx = this.ritualSession.stepIndex + 1;
+    const nextStep = this.ritualSession.ritual.steps[nextIdx];
+    if (!nextStep) {
+      this.stopRitualSession();
+      this.showIsland('Ритуал завершён! 🎉');
+      this.render();
+      return;
     }
+    this.ritualSession.stepIndex = nextIdx;
+    this.ritualSession.stepEndTimestamp = Date.now() + nextStep.minutes * 60_000;
+    this.render();
+    this.startRitualLoop();
+  }
+
+  private stopRitualSession(): void {
+    this.stopRitualLoop();
+    this.ritualSession = null;
   }
 
   private syncRitualTimerOnResume(): void {
@@ -610,126 +509,35 @@ class App {
     }
   }
 
-  private advanceRitualStep(): void {
-    if (!this.ritualSession) return;
-    const nextIdx = this.ritualSession.stepIndex + 1;
-    const nextStep = this.ritualSession.ritual.steps[nextIdx];
-    if (!nextStep) {
-      this.stopRitualSession();
-      telegram.haptic('heavy');
-      this.showIsland('Ритуал завершён! 🎉');
-      this.render();
-      return;
-    }
-    this.ritualSession.stepIndex = nextIdx;
-    this.ritualSession.stepEndTimestamp = Date.now() + nextStep.minutes * 60_000;
-    this.ritualSession.pausedRemainingMs = null;
-    telegram.haptic('medium');
-    this.render();
-    this.startRitualLoop();
-  }
-
-  private stopRitualSession(): void {
-    this.stopRitualLoop();
-    this.ritualSession = null;
-  }
-
   private setupSettingsHandlers(): void {
     document.getElementById('dayBoundarySelect')?.addEventListener('change', (e) => {
-      const hour = Number((e.target as HTMLSelectElement).value);
-      storage.updateSettings({ dayBoundaryHour: hour });
+      storage.updateSettings({ dayBoundaryHour: Number((e.target as HTMLSelectElement).value) });
       this.updateHeaderDate();
-      this.showIsland(`Граница суток: ${String(hour).padStart(2, '0')}:00`);
     });
 
     document.getElementById('exportJsonBtn')?.addEventListener('click', () => {
-      const data = storage.exportJSON();
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `habit-diary-${getTodayKey()}.json`;
+      a.href = URL.createObjectURL(new Blob([storage.exportJSON()], { type: 'application/json' }));
+      a.download = `habit-diary.json`;
       a.click();
-      URL.revokeObjectURL(url);
-      this.showIsland('JSON экспортирован ✓');
-    });
-
-    document.getElementById('importJsonBtn')?.addEventListener('click', () => {
-      modalManager.open(
-        `
-        <form id="importForm" class="habit-form">
-          <h3 class="modal-title">Импорт JSON</h3>
-          <label class="form-field">
-            <span>Вставьте содержимое резервной копии</span>
-            <textarea name="payload" rows="6" spellcheck="false" required></textarea>
-          </label>
-          <button type="submit" class="habit-action-btn primary">Импортировать</button>
-        </form>
-      `,
-        (container) => {
-          const form = container.querySelector('#importForm') as HTMLFormElement | null;
-          form?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const raw = String(new FormData(form).get('payload') ?? '');
-            const ok = storage.importJSON(raw);
-            if (ok) {
-              modalManager.close();
-              this.showIsland('База импортирована ✓');
-            } else {
-              this.showIsland('Некорректный JSON');
-            }
-          });
-        }
-      );
     });
 
     document.getElementById('resetDataBtn')?.addEventListener('click', () => {
-      modalManager.open(
-        `
-        <form id="resetForm" class="habit-form">
-          <h3 class="modal-title">Сбросить все данные?</h3>
-          <p class="settings-desc">Это удалит все привычки, историю и ритуалы на устройстве. Введите слово <b>УДАЛИТЬ</b> для подтверждения.</p>
-          <input type="text" name="confirm" placeholder="УДАЛИТЬ" autocomplete="off" required>
-          <button type="submit" class="habit-action-btn danger">Удалить навсегда</button>
-        </form>
-      `,
-        (container) => {
-          const form = container.querySelector('#resetForm') as HTMLFormElement | null;
-          form?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const val = String(new FormData(form).get('confirm') ?? '').trim();
-            if (val !== 'УДАЛИТЬ') {
-              this.showIsland('Введите слово УДАЛИТЬ');
-              return;
-            }
-            this.stopRitualSession();
-            storage.clearAll();
-            modalManager.close();
-            this.showIsland('Данные очищены');
-          });
-        }
-      );
+      if (confirm('Сбросить всё?')) {
+        storage.clearAll();
+        this.render();
+      }
     });
   }
 
   private showIsland(message: string): void {
     const island = document.getElementById('dynamicIsland');
     if (!island) return;
-
-    if (this.islandTimer !== null) {
-      clearTimeout(this.islandTimer);
-    }
-
+    if (this.islandTimer) clearTimeout(this.islandTimer);
     island.textContent = message;
     island.classList.add('show');
-
-    this.islandTimer = setTimeout(() => {
-      island.classList.remove('show');
-      this.islandTimer = null;
-    }, 2500);
+    this.islandTimer = setTimeout(() => island.classList.remove('show'), 2500);
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  new App();
-});
+document.addEventListener('DOMContentLoaded', () => { new App(); });
