@@ -11,6 +11,7 @@ interface TelegramWebApp {
   expand: () => void;
   close: () => void;
   initData: string;
+  colorScheme?: 'light' | 'dark';
   initDataUnsafe: {
     user?: {
       id: number;
@@ -22,6 +23,8 @@ interface TelegramWebApp {
   };
   themeParams: {
     bg_color?: string;
+    secondary_bg_color?: string;
+    section_bg_color?: string;
     text_color?: string;
     hint_color?: string;
     link_color?: string;
@@ -30,6 +33,7 @@ interface TelegramWebApp {
   };
   viewportStableHeight: number;
   isExpanded: boolean;
+  onEvent?: (eventType: string, callback: () => void) => void;
   BackButton: {
     show: () => void;
     hide: () => void;
@@ -76,33 +80,58 @@ class TelegramWebAppWrapper {
         this.tg = window.Telegram.WebApp;
         this.init();
       }
-    } catch (error) {
-      console.error('Failed to initialize Telegram WebApp:', error);
+    } catch {
+      // Игнорируем ошибку вне Telegram
     }
   }
 
   private init(): void {
     if (!this.tg) return;
-    
+
     try {
       this.tg.ready();
       this.tg.expand();
-      
-      // Применяем тему Telegram к нашим CSS-переменным
-      if (this.tg.themeParams.bg_color) {
-        document.documentElement.style.setProperty('--tg-bg', this.tg.themeParams.bg_color);
-      }
-      if (this.tg.themeParams.text_color) {
-        document.documentElement.style.setProperty('--tg-text', this.tg.themeParams.text_color);
-      }
-      
-    } catch (error) {
-      console.error('Failed to initialize Telegram WebApp:', error);
+      this.applyTheme();
+      this.tg.onEvent?.('themeChanged', () => this.applyTheme());
+    } catch {
+      // Безопасный fallback вне Telegram
+    }
+  }
+
+  applyTheme(): void {
+    if (!this.tg) return;
+    const root = document.documentElement;
+    const params = this.tg.themeParams;
+    const isLight = this.tg.colorScheme === 'light';
+
+    if (params.bg_color) {
+      root.style.setProperty('--bg', params.bg_color);
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      metaTheme?.setAttribute('content', params.bg_color);
+    }
+    if (params.secondary_bg_color || params.section_bg_color) {
+      root.style.setProperty('--card-grouped', params.secondary_bg_color ?? params.section_bg_color ?? '#16161A');
+    }
+    if (params.text_color) {
+      root.style.setProperty('--text-primary', params.text_color);
+    }
+    if (params.hint_color) {
+      root.style.setProperty('--text-secondary', params.hint_color);
+    }
+
+    if (isLight) {
+      root.style.setProperty('--card-raised', '#E9E9EF');
+      root.style.setProperty('--card-overlay', '#FFFFFF');
+      root.style.setProperty('--glass-nav', 'rgba(245, 245, 247, 0.92)');
+      root.style.setProperty('--glass-header', 'rgba(255, 255, 255, 0.92)');
+      root.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.08)');
+      root.style.setProperty('--hairline', 'inset 0 0.5px 0.5px rgba(0, 0, 0, 0.08)');
+      root.style.setProperty('--shadow-ambient', '0 8px 24px rgba(0, 0, 0, 0.12)');
     }
   }
 
   isAvailable(): boolean {
-    return this.tg !== null;
+    return this.tg !== null && this.tg.initData.length > 0;
   }
 
   getUserId(): number | null {
@@ -115,79 +144,75 @@ class TelegramWebAppWrapper {
 
   haptic(style: 'light' | 'medium' | 'heavy' = 'light'): void {
     if (!this.tg?.HapticFeedback) return;
-    
+
     const now = Date.now();
     if (now - this.hapticLastCall < this.hapticThrottle) return;
-    
+
     try {
       this.hapticLastCall = now;
       this.tg.HapticFeedback.impactOccurred(style);
-    } catch (error) {
+    } catch {
       // Игнорируем ошибки haptic в обычном браузере
     }
   }
 
   showBackButton(onClick: () => void): void {
     if (!this.tg?.BackButton) return;
-    
+
     try {
       this.tg.BackButton.onClick(onClick);
       this.tg.BackButton.show();
-    } catch (error) {
-      console.error('Failed to show back button:', error);
+    } catch {
+      // ignore
     }
   }
 
   hideBackButton(onClick?: () => void): void {
     if (!this.tg?.BackButton) return;
-    
+
     try {
       if (onClick) {
         this.tg.BackButton.offClick(onClick);
       }
       this.tg.BackButton.hide();
-    } catch (error) {
-      console.error('Failed to hide back button:', error);
+    } catch {
+      // ignore
     }
   }
 
   close(): void {
-    if (!this.tg) return;
-    
     try {
-      this.tg.close();
-    } catch (error) {
-      console.error('Failed to close WebApp:', error);
+      this.tg?.close();
+    } catch {
+      // ignore
     }
   }
 
   async cloudStorageSet(key: string, value: string): Promise<boolean> {
     if (!this.tg?.CloudStorage) return false;
-    
+
     return new Promise((resolve) => {
-      this.tg!.CloudStorage.setItem(key, value, (error, success) => {
-        if (error) {
-          console.error('CloudStorage setItem error:', error);
-          resolve(false);
-        } else {
-          resolve(success);
-        }
-      });
+      try {
+        this.tg!.CloudStorage.setItem(key, value, (error, success) => {
+          resolve(!error && Boolean(success));
+        });
+      } catch {
+        resolve(false);
+      }
     });
   }
 
   async cloudStorageGet(key: string): Promise<string | null> {
     if (!this.tg?.CloudStorage) return null;
-    
+
     return new Promise((resolve) => {
-      this.tg!.CloudStorage.getItem(key, (error, value) => {
-        if (error) {
-          console.error('CloudStorage getItem error:', error);
-          resolve(null);
-        } else {
-          resolve(value);
-        }
-      });
+      try {
+        this.tg!.CloudStorage.getItem(key, (error, value) => {
+          resolve(error ? null : value);
+        });
+      } catch {
+        resolve(null);
+      }
     });
   }
 }

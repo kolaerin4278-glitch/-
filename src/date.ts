@@ -4,21 +4,21 @@ const formatters = new Map<string, Intl.DateTimeFormat>();
 
 function getFormatter(options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
   const key = JSON.stringify(options);
-  if (!formatters.has(key)) {
-    formatters.set(key, new Intl.DateTimeFormat('ru-RU', options));
-  }
-  return formatters.get(key)!;
+  const existing = formatters.get(key);
+  if (existing) return existing;
+  const created = new Intl.DateTimeFormat('ru-RU', options);
+  formatters.set(key, created);
+  return created;
 }
 
-export function getTodayKey(): string {
+export function getTodayKey(boundaryHour: number = DAY_BOUNDARY_HOUR): string {
   const now = new Date();
   const hour = now.getHours();
-  
-  // Если час меньше границы суток, считаем это вчерашним днем
-  if (hour < DAY_BOUNDARY_HOUR) {
+
+  if (hour < boundaryHour) {
     now.setDate(now.getDate() - 1);
   }
-  
+
   return toDateKey(now);
 }
 
@@ -31,7 +31,7 @@ export function toDateKey(date: Date): string {
 
 export function fromDateKey(key: string): Date {
   const parts = key.split('-').map(Number);
-  const year = parts[0] ?? 2024;
+  const year = parts[0] ?? 2026;
   const month = parts[1] ?? 1;
   const day = parts[2] ?? 1;
   return new Date(year, month - 1, day);
@@ -43,24 +43,20 @@ export function formatDate(date: Date): string {
     day: 'numeric',
     month: 'long'
   });
-  
-  return formatter.format(date);
+
+  const formatted = formatter.format(date);
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
-export function getPeriodDateKeys(period: 'week' | 'month' | 'all', endDate?: Date): string[] {
-  const end = endDate ?? new Date();
+export function getPeriodDateKeys(daysBack: number, endKey?: string): string[] {
+  const end = endKey ? fromDateKey(endKey) : fromDateKey(getTodayKey());
   const keys: string[] = [];
-  
-  let daysBack = 0;
-  if (period === 'week') daysBack = 7;
-  else if (period === 'month') daysBack = 30;
-  else daysBack = 365; // Для 'all' берём год
-  
+
   for (let i = 0; i < daysBack; i++) {
     const date = new Date(end);
     date.setDate(date.getDate() - i);
     keys.push(toDateKey(date));
   }
-  
+
   return keys;
 }

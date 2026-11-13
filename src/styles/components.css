@@ -1,24 +1,336 @@
-/* ... (предыдущие стили) ... */
-.habit-completed {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  justify-content: center;
+.habit-card {
+  background: var(--card-grouped);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--hairline);
+  contain: layout style paint;
+  touch-action: pan-y;
 }
 
-.analytics-view { padding: 16px; }
+.habit-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
 
-.metric-card {
-  background: var(--card-grouped);
-  padding: 16px;
-  border-radius: 16px;
-  text-align: center;
+.habit-icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.habit-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.habit-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.habit-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.habit-sphere-tag {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--card-raised);
+  padding: 2px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.habit-trigger {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.habit-edit-btn {
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  background: var(--card-raised);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--emerald-glow);
+  color: var(--emerald);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.plan-b-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--amber-glow);
+  color: var(--amber);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.skip-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: rgba(255, 59, 48, 0.16);
+  color: var(--coral);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.habit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.habit-action-btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: var(--card-raised);
+  color: var(--text-primary);
+  transition: transform 0.2s var(--spring), opacity 0.2s;
+}
+
+.habit-action-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.habit-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.habit-action-btn.primary {
+  background: var(--emerald);
+  color: #000000;
+}
+
+.habit-action-btn.amber {
+  background: var(--amber-glow);
+  color: var(--amber);
+}
+
+.habit-action-btn.danger {
+  background: var(--card-raised);
+  color: var(--coral);
+}
+
+.habit-completed {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.undo-inline-btn {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--card-raised);
+}
+
+/* Energy & Filters */
+.today-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
-.metric-value { font-size: 2rem; font-weight: 700; color: var(--emerald); }
-.metric-label { font-size: 0.875rem; color: var(--text-secondary); }
+.campfire-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card-grouped);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: var(--hairline);
+}
+
+.campfire-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.campfire-pct {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--emerald);
+}
+
+.energy-card {
+  background: var(--card-grouped);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: var(--hairline);
+}
+
+.energy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.energy-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.energy-level-tab {
+  min-height: 40px;
+  border-radius: 10px;
+  background: var(--card-raised);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.energy-level-tab.active {
+  background: var(--emerald);
+  color: #000000;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-pill {
+  min-height: 36px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--card-grouped);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.filter-pill.active {
+  background: var(--text-primary);
+  color: var(--bg);
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  gap: 16px;
+}
+
+.empty-state-icon {
+  font-size: 56px;
+}
+
+.empty-state-text {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  max-width: 300px;
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-sheet {
+  background: var(--card-raised);
+  width: 100%;
+  max-height: 90dvh;
+  overflow-y: auto;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 20px max(var(--safe-bottom), 24px);
+  transform: translateY(100%);
+  transition: transform 0.3s var(--spring);
+}
+
+.modal-overlay.active .modal-sheet {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.modal-close-btn {
+  width: 36px;
+  height: 36px;
+  background: var(--card-overlay);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
 
 .habit-form {
   display: flex;
@@ -26,10 +338,212 @@
   gap: 12px;
 }
 
-.habit-form input, .habit-form select {
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.habit-form input,
+.habit-form select,
+.habit-form textarea {
+  width: 100%;
   padding: 12px;
   background: var(--card-overlay);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  color: white;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* Cards & Sections (Analytics, Mastery, Rituals, Settings) */
+.section-card {
+  background: var(--card-grouped);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--hairline);
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.section-actions-top {
+  margin-bottom: 12px;
+  display: flex;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.metric-card {
+  background: var(--card-grouped);
+  padding: 16px 12px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: var(--hairline);
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--emerald);
+}
+
+.metric-label {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+}
+
+.heat-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--card-raised);
+}
+
+.heat-cell.mid {
+  background: rgba(52, 199, 89, 0.45);
+}
+
+.heat-cell.high {
+  background: var(--emerald);
+}
+
+.heatmap-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.heatmap-legend .dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+
+.heatmap-legend .dot.empty { background: var(--card-raised); }
+.heatmap-legend .dot.mid { background: rgba(52, 199, 89, 0.45); }
+.heatmap-legend .dot.high { background: var(--emerald); }
+
+/* Mastery */
+.mastery-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--card-raised);
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.mastery-fill {
+  height: 100%;
+  background: var(--emerald);
+  border-radius: 999px;
+}
+
+/* Rituals */
+.ritual-steps-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.ritual-step-line {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  padding-left: 8px;
+  border-left: 2px solid var(--emerald);
+}
+
+.ritual-player-card {
+  border: 1px solid var(--emerald);
+}
+
+.ritual-player-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.ritual-player-step {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.ritual-timer-digits {
+  font-size: 2.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--emerald);
+  text-align: center;
+  margin: 8px 0;
+}
+
+/* Settings */
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--glass-border);
+  font-size: 0.9375rem;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-value {
+  color: var(--text-secondary);
+}
+
+.settings-select {
+  background: var(--card-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.settings-desc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
 }
