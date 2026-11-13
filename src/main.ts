@@ -364,7 +364,8 @@ class App {
       btn.addEventListener('click', (e) => {
         const button = e.currentTarget as HTMLElement;
         const card = button.closest('.habit-card') as HTMLElement | null;
-        const habitId = card?.dataset.habitId;
+        if (!card) return;
+        const habitId = card.dataset.habitId;
         const action = button.dataset.action;
         if (!habitId || !action) return;
         const status = action === 'full' ? STATUS.FULL : action === 'planb' ? STATUS.PLAN_B : STATUS.SKIP;
@@ -425,7 +426,7 @@ class App {
       btn.addEventListener('click', (e) => {
         const id = (e.currentTarget as HTMLElement).dataset.startRitual;
         const ritual = storage.getRituals().find((r) => r.id === id);
-        if (!ritual) return;
+        if (!ritual || !ritual.steps[0]) return;
         this.ritualSession = { ritual, stepIndex: 0, stepEndTimestamp: Date.now() + ritual.steps[0].minutes * 60_000, pausedRemainingMs: null };
         this.render();
         this.startRitualLoop();
