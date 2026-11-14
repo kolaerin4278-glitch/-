@@ -1,4 +1,5 @@
-import { fromDateKey, formatDate } from '../date';
+import { fromDateKey, formatDate, getTodayKey } from '../date';
+import { escapeHtml } from '../utils';
 import { storage } from '../storage';
 import { computeStreak } from '../streak';
 import { HABIT_TYPES, STATUS } from '../constants';
@@ -32,6 +33,13 @@ export function renderTodayPageHTML(): string {
 
   return `
     <div class="page" id="todayPage">
+      <section class="day-hero" aria-label="Прогресс дня">
+        <div><span class="eyebrow">МАЛЕНЬКИЕ ШАГИ · БОЛЬШИЕ ПЕРЕМЕНЫ</span>
+          <h2>В своём ритме.</h2><p>${habits.length ? 'Не идеально. Просто немного лучше, чем вчера.' : 'Начни с одной привычки. Остальное придёт.'}</p>
+          <span class="day-hero-caption">${doneCount} из ${habits.length} выполнено</span>
+        </div>
+        <div class="day-orbit" style="--day-progress:${dayPct}%"><span>${dayPct}<small>% дня</small></span></div>
+      </section>
       <div class="today-toolbar">
         <div class="date-snap-scroller" id="dateSnapScroller">
           ${renderDateSnapper(dateKey)}
@@ -60,6 +68,8 @@ export function renderTodayPageHTML(): string {
         <input type="text" class="search-inline-input" id="habitSearchInput" placeholder="Поиск привычки...">
       </div>
 
+      <div class="list-heading"><h2>Твои привычки</h2><span>${habits.length ? 'Один шаг за раз' : 'Точка старта'}</span></div>
+      ${habits.length === 0 ? `<section class="first-habit"><div class="first-habit-orb" aria-hidden="true">✦</div><h3>Здесь начинается твой ритм</h3><p>Вода утром, несколько страниц книги или минута тишины — выбери то, что важно тебе.</p><button type="button" class="habit-action-btn primary" data-create-habit>Создать первую привычку <span aria-hidden="true">↗</span></button></section>` : ''}
       <div class="habit-list" id="habitList">
         ${habits
           .map((h) => {
@@ -76,10 +86,10 @@ export function renderTodayPageHTML(): string {
                     <div class="habit-icon" aria-hidden="true">${h.icon}</div>
                     <div class="habit-info">
                       <div class="habit-title-row">
-                        <div class="habit-title">${h.title}</div>
+                        <div class="habit-title">${escapeHtml(h.title)}</div>
                         <span class="habit-sphere-tag" data-sphere="${h.sphere}" aria-label="Сфера: ${h.sphere}">${h.sphere}</span>
                       </div>
-                      <div class="habit-trigger">${h.trigger}</div>
+                      <div class="habit-trigger">${escapeHtml(h.trigger)}</div>
                       ${streak > 0 ? `<div class="habit-streak" aria-label="Серия: ${streak} дн.">🔥 ${streak}</div>` : ''}
                       ${isStacked ? `<div class="habit-stack-link" aria-label="Связана с другой привычкой">🔗 связь</div>` : ''}
                     </div>
@@ -113,7 +123,7 @@ export function renderTodayPageHTML(): string {
  */
 function renderDateSnapper(activeKey: string): string {
   const state = storage.getState();
-  const todayKey = storage.getSelectedDateKey();
+  const todayKey = getTodayKey(state.settings.dayBoundaryHour);
   const keys: string[] = [];
   const base = new Date(`${todayKey}T00:00:00`);
   for (let i = 13; i >= 0; i--) {
@@ -136,7 +146,7 @@ function renderDateSnapper(activeKey: string): string {
       return `
         <button type="button" class="date-snap-cell ${isActive ? 'active' : ''} ${isToday ? 'today' : ''}"
                 data-date-key="${key}" aria-pressed="${isActive}">
-          <span class="date-snap-weekday">${formatDate(d).split(' ')[0]?.slice(0, 2) ?? ''}</span>
+          <span class="date-snap-weekday">${d.toLocaleDateString('ru-RU', { weekday: 'short' })}</span>
           <span class="date-snap-day">${d.getDate()}</span>
           <span class="date-snap-dot ${done ? 'done' : ''}"></span>
         </button>

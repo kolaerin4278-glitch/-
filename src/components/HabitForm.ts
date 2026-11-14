@@ -313,6 +313,8 @@ export function getHabitFormHTML(habitId?: string): string {
       </div>
 
       <div class="form-row">
+        <div class="form-field">
+          <label for="habitEnergyCostSelect">Энергозатраты</label>
           <select id="habitEnergyCostSelect" name="energyCost">
             <option value="1" ${curEnergy === 1 ? 'selected' : ''}>⚡ Лёгкая (1 ед.)</option>
             <option value="2" ${curEnergy === 2 ? 'selected' : ''}>⚡⚡ Средняя (2 ед.)</option>

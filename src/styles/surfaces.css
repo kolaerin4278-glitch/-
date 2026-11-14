@@ -1,4 +1,14 @@
 @layer surfaces {
+  /* ============================================================
+     LIQUID GLASS — ядро визуального языка
+     Каждая стеклянная поверхность состоит из:
+     1) полупрозрачной подложки
+     2) живой подложки с backdrop-filter (размытие + насыщенность)
+     3) верхнего блика (specular) — блик света по верхней кромке
+     4) нижнего отражённого света (rim light)
+     5) мягкой тени для отрыва от фона
+     ============================================================ */
+
   .glass-surface-1,
   .glass-card,
   .habit-card,
@@ -7,27 +17,57 @@
   .energy-card,
   .metric-card {
     position: relative;
-    background: var(--glass-surface-1);
-    background-image: var(--glass-specular);
+    /* Слои: 1) блик по верхней кромке, 2) цветное свечение сферы, 3) подложка */
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.13) 0%,
+        rgba(255, 255, 255, 0.035) 16%,
+        transparent 42%
+      ),
+      radial-gradient(120% 90% at 0% 0%, var(--sphere-glow, transparent) 0%, transparent 55%),
+      var(--glass-surface-1);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-sm), var(--hairline);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.09),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+      var(--shadow-md);
+  }
+
+  /* Свечение сферы мягче для карточек привычек */
+  .habit-card {
+    --sphere-glow-opacity: 0.5;
   }
 
   .glass-surface-2 {
-    background: var(--glass-surface-2);
+    position: relative;
+    background:
+      linear-gradient(160deg, rgba(255, 255, 255, 0.07) 0%, transparent 45%),
+      var(--glass-surface-2);
     border: 1px solid var(--glass-border);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .glass-surface-3 {
-    background: var(--glass-surface-3);
+    position: relative;
+    background:
+      linear-gradient(160deg, rgba(255, 255, 255, 0.09) 0%, transparent 48%),
+      var(--glass-surface-3);
     border: 1px solid var(--glass-border-strong);
-    box-shadow: var(--shadow-ambient), var(--hairline);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      var(--shadow-ambient);
   }
 
   .glass-surface-4 {
-    background: var(--glass-surface-4);
+    position: relative;
+    background:
+      linear-gradient(160deg, rgba(255, 255, 255, 0.11) 0%, transparent 50%),
+      var(--glass-surface-4);
     border: 1px solid var(--glass-border-strong);
-    box-shadow: var(--shadow-modal), var(--hairline);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      var(--shadow-modal);
   }
 
   @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -38,27 +78,27 @@
     .campfire-bar,
     .energy-card,
     .metric-card {
-      backdrop-filter: var(--blur-1);
-      -webkit-backdrop-filter: var(--blur-1);
+      backdrop-filter: blur(20px) saturate(170%);
+      -webkit-backdrop-filter: blur(20px) saturate(170%);
     }
 
     .glass-surface-2 {
-      backdrop-filter: var(--blur-2);
-      -webkit-backdrop-filter: var(--blur-2);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
     }
 
     .glass-surface-3,
     .ios-island-navbar,
     .pip-docked-bar {
-      backdrop-filter: var(--blur-3);
-      -webkit-backdrop-filter: var(--blur-3);
+      backdrop-filter: blur(36px) saturate(190%);
+      -webkit-backdrop-filter: blur(36px) saturate(190%);
     }
 
     .glass-surface-4,
     .modal-sheet,
     .glass-context-menu {
-      backdrop-filter: var(--blur-4);
-      -webkit-backdrop-filter: var(--blur-4);
+      backdrop-filter: blur(48px) saturate(200%);
+      -webkit-backdrop-filter: blur(48px) saturate(200%);
     }
   }
 
@@ -79,10 +119,39 @@
     }
   }
 
+  /* ============================================================
+     Акцентные стеклянные поверхности
+     ============================================================ */
+
+  /* Интерактивное стекло: лёгкий подъём и усиление блика */
   @media (hover: hover) and (pointer: fine) {
-    .habit-card:hover,
-    .metric-card:hover {
-      border-color: var(--glass-border-strong);
+    .habit-card,
+    .metric-card {
+      transition:
+        transform 0.4s var(--ease-out-back),
+        border-color 0.3s ease,
+        box-shadow 0.4s ease;
     }
+
+    .habit-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--glass-border-hover);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        var(--shadow-lg);
+    }
+
+    .metric-card:hover {
+      transform: translateY(-3px) scale(1.015);
+      border-color: var(--glass-border-hover);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 16px 40px rgba(0, 0, 0, 0.4),
+        0 0 32px var(--accent-primary-glow);
+    }
+  }
+
+  .habit-card:active {
+    transition: transform 0.12s ease;
   }
 }

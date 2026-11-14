@@ -35,6 +35,13 @@ async function bootstrap() {
 
   // Отмена предыдущей привязки счётчиков/таймеров при перерисовке ленты
   let progressAbort: AbortController | null = null;
+  let swipeManager: SwipeManager | null = null;
+  let renderedPage = '';
+  const navIcons = {
+    today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="4" width="14" height="17" rx="4"/><path d="M9 3h6M9 10h6M9 14h4" stroke-linecap="round"/></svg>',
+    stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 19V12m7 7V5m7 14V9" stroke-linecap="round"/></svg>',
+    profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2" stroke-linecap="round"/></svg>'
+  };
 
   // Контроллер ритуалов (живёт на протяжении всей сессии: держит активную сессию)
   const ritualController = new RitualController(() => render());
@@ -101,6 +108,11 @@ async function bootstrap() {
   }
 
   function render() {
+    const pageChanged = renderedPage !== currentPage;
+    const scrollTop = pageChanged ? 0 : document.getElementById('mainContent')?.scrollTop ?? 0;
+    renderedPage = currentPage;
+    swipeManager?.destroy();
+    progressAbort?.abort();
     const pageTitle = getPageTitle(currentPage);
     const pageContent = renderPageContent(currentPage);
     const showAddBtn = currentPage === 'today';
@@ -113,15 +125,28 @@ async function bootstrap() {
           ${showAddBtn ? '<button id="addHabitBtn" class="header-add-btn">＋</button>' : ''}
         </div>
       </header>
-      <main id="mainContent" class="${isSubPage ? 'page-subpage page-subpage--${currentPage}' : ''}">${pageContent}</main>
+      <main id="mainContent" class="page-content ${pageChanged ? 'page-enter' : ''} page-content--${currentPage} ${isSubPage ? `page-subpage page-subpage--${currentPage}` : ''}">${pageContent}</main>
       <nav class="ios-island-navbar">
-        <button class="nav-tab-btn ${currentPage === 'today' ? 'active' : ''}" data-page="today">Дневник</button>
-        <button class="nav-tab-btn ${currentPage === 'stats' ? 'active' : ''}" data-page="stats">Аналитика</button>
-        <button class="nav-tab-btn ${currentPage === 'profile' ? 'active' : ''}" data-page="profile">Профиль</button>
+        <button class="nav-tab-btn ${currentPage === 'today' ? 'active' : ''}" data-page="today">
+          <span class="nav-icon" aria-hidden="true">${navIcons.today}</span>
+          <span class="nav-label">Дневник</span>
+        </button>
+        <button class="nav-tab-btn ${currentPage === 'stats' ? 'active' : ''}" data-page="stats">
+          <span class="nav-icon" aria-hidden="true">${navIcons.stats}</span>
+          <span class="nav-label">Аналитика</span>
+        </button>
+        <button class="nav-tab-btn ${currentPage === 'profile' ? 'active' : ''}" data-page="profile">
+          <span class="nav-icon" aria-hidden="true">${navIcons.profile}</span>
+          <span class="nav-label">Профиль</span>
+        </button>
       </nav>
       <div id="dynamicIsland" class="dynamic-island"></div>
-      <div id="confettiCanvas"></div>
     `;
+    const viewport = document.getElementById('mainContent');
+    if (viewport) viewport.scrollTop = scrollTop;
+    const activeDate = document.querySelector<HTMLElement>('.date-snap-cell.active');
+    const dateTrack = document.querySelector<HTMLElement>('.date-snap-track');
+    if (activeDate && dateTrack) dateTrack.scrollLeft = Math.max(0, activeDate.offsetLeft - dateTrack.clientWidth / 2 + activeDate.clientWidth / 2);
 
     // Кнопка «Назад» Telegram в корзине и архиве (п. 0395)
     if (isSubPage) {
@@ -137,7 +162,7 @@ async function bootstrap() {
     if (currentPage === 'today') {
       const list = document.querySelector('.habit-list') as HTMLElement;
       if (list) {
-        new SwipeManager(list, {
+        swipeManager = new SwipeManager(list, {
           onSwipe: (id, dir) => {
             if (dir === 'right-long') HabitActionController.performFull(id);
             else if (dir === 'right-short') HabitActionController.performPlanB(id);

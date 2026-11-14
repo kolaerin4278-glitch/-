@@ -131,24 +131,30 @@ function renderHeatmap(checks: ReadonlyMap<string, import('../core/types').Check
     counts.set(check.date, (counts.get(check.date) ?? 0) + 1);
   }
 
+  const start = new Date(today);
+  start.setDate(start.getDate() - (DAYS - 1));
+  const startWeekday = (start.getDay() + 6) % 7;
+  const weeks = Math.ceil((startWeekday + DAYS) / 7);
   const cells: string[] = [];
-  for (let i = DAYS - 1; i >= 0; i -= 1) {
-    const d = new Date(today.getTime() - i * 86_400_000);
+  let totalDays = 0;
+  for (let i = 0; i < DAYS; i += 1) {
+    // Календарная арифметика не пропускает и не повторяет даты при смене часового пояса/DST.
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const count = counts.get(key) ?? 0;
     const level = count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 9 ? 3 : 4;
     const dow = (d.getDay() + 6) % 7; // 0 = Пн
-    const title = `${d.getLocaleDateString('ru-RU')}: ${count} ${plural(count, 'выполнение', 'выполнения', 'выполнений')}`;
+    const week = Math.floor((startWeekday + i) / 7);
+    if (count > 0) totalDays += 1;
+    const title = `${d.toLocaleDateString('ru-RU')}: ${count} ${plural(count, 'выполнение', 'выполнения', 'выполнений')}`;
     cells.push(
-      `<div class="heatmap-cell" data-level="${level}" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}"></div>`
+      `<div class="heatmap-cell" data-level="${level}" style="grid-column:${week + 1}; grid-row:${dow + 1};" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}"></div>`
     );
-    if (dow === 6) cells.push('<div class="heatmap-row-end"></div>');
   }
-
-  const totalDays = counts.size;
   return `
     <div class="heatmap-wrap">
-      <div class="heatmap-grid" role="img" aria-label="Тепловая карта выполнения привычек за последние 26 недель">
+      <div class="heatmap-grid" style="grid-template-columns:repeat(${weeks}, 12px); grid-template-rows:repeat(7, 12px); min-width:0; max-width:100%;" role="img" aria-label="Тепловая карта выполнения привычек за последние 26 недель">
         ${cells.join('')}
       </div>
       <div class="heatmap-legend">

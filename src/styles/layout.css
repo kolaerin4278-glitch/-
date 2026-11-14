@@ -59,17 +59,20 @@
     z-index: 4500;
   }
 
-  /* Верхняя стеклянная шапка */
+  /* === Верхняя шторка (Liquid Glass) === */
   .ios-fixed-header {
     position: sticky;
     top: 0;
     z-index: 95;
     flex-shrink: 0;
-    background: var(--glass-header);
-    backdrop-filter: var(--blur-3);
-    -webkit-backdrop-filter: var(--blur-3);
-    border-bottom: 1px solid var(--glass-border);
-    padding: max(var(--safe-top), 10px) max(var(--safe-right), 16px) 10px max(var(--safe-left), 16px);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 70%),
+      var(--glass-header);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border-bottom: 1px solid var(--hairline);
+    box-shadow: 0 1px 0 var(--glass-specular), 0 8px 32px rgba(0, 0, 0, 0.28);
+    padding: max(var(--safe-top), 10px) max(var(--safe-right), 16px) 12px max(var(--safe-left), 16px);
     transition: background-color 0.25s ease, border-color 0.25s ease;
   }
 
@@ -86,17 +89,21 @@
   }
 
   #pageHeading {
-    font-size: var(--text-display);
+    font-size: var(--text-h1);
     font-weight: 800;
-    letter-spacing: -0.025em;
+    letter-spacing: var(--tracking-tight);
     line-height: 1.15;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-primary) 55%, var(--accent) 130%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   .header-sub-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 2px;
+    margin-top: 3px;
     flex-wrap: wrap;
   }
 
@@ -117,9 +124,11 @@
   .header-add-btn {
     min-width: 44px;
     min-height: 44px;
-    padding: 0 10px;
-    border-radius: var(--radius-md);
+    padding: 0 12px;
+    border-radius: var(--radius-lg);
     background: var(--glass-surface-2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
     color: var(--text-primary);
     display: inline-flex;
@@ -128,92 +137,126 @@
     gap: 5px;
     font-size: var(--text-caption);
     font-weight: 700;
-    transition: transform 0.2s var(--spring), border-color 0.2s ease, background-color 0.2s ease;
+    box-shadow: inset 0 1px 0 var(--glass-specular);
+    transition: transform 0.3s var(--ease-out-back), border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.3s ease;
   }
 
   .header-add-btn {
-    color: var(--accent);
-    background: var(--accent-glow);
-    border-color: rgba(52, 211, 153, 0.28);
+    color: var(--text-on-accent);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-color: transparent;
+    box-shadow: 0 4px 18px var(--accent-primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .header-add-btn:hover {
+    box-shadow: 0 6px 26px var(--accent-primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
 
   .header-icon-btn:active,
   .header-add-btn:active {
-    transform: scale(0.94);
+    transform: scale(0.9);
   }
 
-  /* Основной скроллируемый viewport */
+  /* === Основной скроллируемый viewport (единый контейнер прокрутки) === */
   #mainContent {
     flex: 1;
     min-height: 0;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .carousel-wrapper {
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .carousel-pages {
-    display: flex;
-    height: 100%;
-    width: 100%;
-    overflow-x: hidden;
-    overflow-y: hidden;
-  }
-
-  .page {
-    flex: 0 0 100%;
-    width: 100%;
-    height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    padding: 14px max(var(--safe-right), 16px) calc(116px + var(--safe-bottom)) max(var(--safe-left), 16px);
+    overscroll-behavior-y: contain;
+    scroll-behavior: smooth;
+    position: relative;
+    padding: 0 max(var(--safe-right), 16px) calc(122px + var(--safe-bottom)) max(var(--safe-left), 16px);
+    /* Указываем браузеру, что содержимое растёт — для корректной полосы прокрутки */
+    scrollbar-gutter: stable;
   }
 
-  /* Плавающий стеклянный остров нижней навигации */
+  /* Внутренние страницы не создают второго скролл-контейнера */
+  .page {
+    width: 100%;
+    min-height: 100%;
+    overflow: visible;
+    padding: 16px 0 0;
+  }
+
+  /* Плавное появление содержимого при смене страницы */
+  .page-content {
+    animation: pageFadeIn 0.42s var(--ease-out-expo) both;
+  }
+
+  @keyframes pageFadeIn {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 14px, 0) scale(0.995);
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  .carousel-wrapper {
+    width: 100%;
+    overflow: visible;
+  }
+
+  .carousel-pages {
+    display: block;
+    width: 100%;
+    overflow: visible;
+  }
+
+  /* === Плавающий остров нижней навигации === */
   .ios-island-navbar {
     position: fixed;
-    bottom: max(var(--safe-bottom), 10px);
+    bottom: max(var(--safe-bottom), 12px);
     left: 50%;
     transform: translateX(-50%);
     z-index: 120;
     width: min(calc(100% - 24px), 460px);
-    background: var(--glass-nav);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 60%),
+      var(--glass-nav);
+    backdrop-filter: blur(32px) saturate(190%);
+    -webkit-backdrop-filter: blur(32px) saturate(190%);
     border: 1px solid var(--glass-border-strong);
-    border-radius: 22px;
+    border-radius: 26px;
     padding: 6px;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 2px;
-    box-shadow: var(--shadow-ambient), var(--hairline);
+    box-shadow: var(--shadow-ambient), inset 0 1px 0 var(--glass-specular);
   }
 
   .nav-tab-btn {
     position: relative;
     z-index: 2;
-    min-height: 48px;
+    min-height: 50px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 3px;
     padding: 6px 4px;
-    border-radius: 16px;
-    color: var(--text-secondary);
-    transition: color 0.25s ease, transform 0.2s var(--spring);
+    border-radius: 20px;
+    color: var(--text-tertiary);
+    transition: color 0.3s ease, transform 0.3s var(--ease-out-back);
     user-select: none;
   }
 
   .nav-tab-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.92);
   }
 
   .nav-tab-btn.active {
     color: var(--text-primary);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+    box-shadow: inset 0 1px 0 var(--glass-specular);
   }
 
   .nav-icon {
@@ -224,6 +267,11 @@
     justify-content: center;
     font-size: 18px;
     line-height: 1;
+    transition: transform 0.4s var(--ease-out-back);
+  }
+
+  .nav-tab-btn.active .nav-icon {
+    transform: translateY(-1px) scale(1.1);
   }
 
   .nav-label {
@@ -246,27 +294,31 @@
     pointer-events: none;
   }
 
-  /* PIP Мини-плеер ритуала над нижней навигацией без перекрытия */
+  /* === PIP Мини-плеер ритуала === */
   .pip-docked-bar {
     position: fixed;
     left: 50%;
     transform: translateX(-50%);
-    bottom: calc(max(var(--safe-bottom), 10px) + 68px);
+    bottom: calc(max(var(--safe-bottom), 12px) + 72px);
     z-index: 118;
     width: min(calc(100% - 24px), 460px);
-    background: var(--glass-surface-3);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 60%),
+      var(--glass-surface-3);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
     border: 1px solid var(--glass-border-strong);
-    border-radius: 18px;
+    border-radius: 20px;
     padding: 10px 12px;
     display: none;
     flex-direction: column;
     gap: 6px;
-    box-shadow: var(--shadow-ambient);
+    box-shadow: var(--shadow-ambient), inset 0 1px 0 var(--glass-specular);
   }
 
   .pip-docked-bar.active {
     display: flex;
-    animation: slideUpIsland 0.28s var(--spring);
+    animation: slideUpIsland 0.35s var(--ease-out-back);
   }
 
   .pip-main-row {
@@ -311,7 +363,7 @@
   .pip-mini-btn {
     min-width: 36px;
     min-height: 36px;
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--glass-surface-2);
     border: 1px solid var(--glass-border);
     display: inline-flex;
@@ -330,25 +382,29 @@
 
   .pip-progress-fill {
     height: 100%;
-    background: var(--accent);
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-tertiary));
     border-radius: var(--radius-pill);
     transition: width 0.25s linear;
   }
 
-  /* Dynamic Island: очередь тостов с Undo и закрытием */
+  /* === Dynamic Island === */
   .dynamic-island {
     position: fixed;
     top: calc(max(var(--safe-top), 10px) + 8px);
     left: 50%;
     transform: translate(-50%, -18px) scale(0.95);
     z-index: 9999;
-    background: var(--glass-surface-4);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 60%),
+      var(--glass-surface-4);
+    backdrop-filter: blur(36px) saturate(200%);
+    -webkit-backdrop-filter: blur(36px) saturate(200%);
     border: 1px solid var(--glass-border-strong);
     border-radius: var(--radius-pill);
-    padding: 8px 14px;
-    min-width: 180px;
+    padding: 9px 16px;
+    min-width: 190px;
     max-width: min(92vw, 440px);
-    box-shadow: var(--shadow-ambient);
+    box-shadow: var(--shadow-ambient), inset 0 1px 0 var(--glass-specular);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -357,9 +413,7 @@
     font-weight: 600;
     opacity: 0;
     pointer-events: none;
-    backdrop-filter: var(--blur-4);
-    -webkit-backdrop-filter: var(--blur-4);
-    transition: opacity 0.24s var(--spring), transform 0.28s var(--spring);
+    transition: opacity 0.3s var(--ease-out-back), transform 0.4s var(--ease-out-back);
   }
 
   .dynamic-island.show {
@@ -375,13 +429,14 @@
   }
 
   .island-undo-btn {
-    padding: 6px 12px;
+    padding: 6px 13px;
     border-radius: var(--radius-pill);
-    background: var(--accent);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: var(--text-on-accent);
     font-size: var(--text-micro);
     font-weight: 700;
     flex-shrink: 0;
+    box-shadow: 0 3px 12px var(--accent-primary-glow);
   }
 
   .island-close-btn {
@@ -395,7 +450,6 @@
     flex-shrink: 0;
   }
 
-  /* Адаптация под узкие экраны и 400% масштабирование (WCAG 1.4.10) */
   @media (max-width: 360px) {
     .nav-label {
       font-size: 0.6rem;

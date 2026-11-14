@@ -1,45 +1,79 @@
 @layer aurora {
   /* Живой фоновый слой преломления света сквозь матовое стекло */
+  body {
+    background:
+      radial-gradient(ellipse 120% 80% at 50% -10%, #1a1f33 0%, transparent 60%),
+      linear-gradient(175deg, var(--surface-deepest) 0%, var(--surface-deeper) 45%, var(--surface-deep) 100%);
+  }
+
   body::before {
     content: "";
     position: fixed;
-    inset: -18%;
+    inset: -22%;
     z-index: 0;
     pointer-events: none;
     background:
-      radial-gradient(circle at 18% 16%, var(--aurora-1) 0%, transparent 46%),
-      radial-gradient(circle at 84% 26%, var(--aurora-2) 0%, transparent 44%),
-      radial-gradient(circle at 52% 84%, var(--aurora-3) 0%, transparent 50%);
-    filter: blur(36px);
+      radial-gradient(circle at 16% 14%, var(--aurora-1) 0%, transparent 42%),
+      radial-gradient(circle at 86% 24%, var(--aurora-2) 0%, transparent 40%),
+      radial-gradient(circle at 50% 86%, var(--aurora-3) 0%, transparent 46%);
+    opacity: 0.28;
+    filter: blur(72px) saturate(150%);
     transform: translate3d(0, 0, 0);
-    animation: auroraDrift 22s ease-in-out infinite alternate;
+    animation: auroraDrift 26s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  /* Второй, более медленный слой для глубины параллакса */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: -30%;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 70% 70%, var(--accent-secondary) 0%, transparent 38%),
+      radial-gradient(circle at 25% 75%, var(--accent-tertiary) 0%, transparent 34%);
+    opacity: 0.14;
+    filter: blur(96px);
+    animation: auroraDriftSlow 38s ease-in-out infinite alternate;
+    will-change: transform;
   }
 
   /* Тончайшая микротекстура зерна против бандинга градиентов на OLED */
-  body::after {
+  #app::before {
     content: "";
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.028;
+    opacity: 0.022;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
   }
 
   @keyframes auroraDrift {
     0% {
-      transform: translate3d(-2%, -1%, 0) scale(1);
+      transform: translate3d(-3%, -2%, 0) scale(1);
     }
     50% {
-      transform: translate3d(2%, 2%, 0) scale(1.04);
+      transform: translate3d(3%, 3%, 0) scale(1.06);
     }
     100% {
-      transform: translate3d(-1%, 3%, 0) scale(0.98);
+      transform: translate3d(-1%, 4%, 0) scale(0.97);
+    }
+  }
+
+  @keyframes auroraDriftSlow {
+    0% {
+      transform: translate3d(2%, 3%, 0) scale(1.05);
+    }
+    100% {
+      transform: translate3d(-4%, -2%, 0) scale(1);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    body::before {
+    body::before,
+    body::after {
       animation: none;
     }
   }
@@ -47,6 +81,12 @@
   [data-save-data="true"] body::before,
   [data-low-energy="true"] body::before {
     animation: none;
-    opacity: 0.45;
+    opacity: 0.18;
+  }
+
+  [data-save-data="true"] body::after,
+  [data-low-energy="true"] body::after {
+    animation: none;
+    opacity: 0.08;
   }
 }
