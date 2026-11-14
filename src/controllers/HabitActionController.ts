@@ -14,7 +14,8 @@ import { getTodayKey } from '../date';
 export class HabitActionController {
   
   static performFull(habitId: string): void {
-    const today = getTodayKey();
+    const state = storage.getState();
+    const today = getTodayKey(state.settings.dayBoundaryHour);
     const prev = storage.getCheck(habitId, today);
     
     storage.setCheck(habitId, today, {
@@ -22,10 +23,9 @@ export class HabitActionController {
       ts: Date.now()
     });
 
-    const state = storage.getState();
     const habit = state.habits.find(h => h.id === habitId);
     if (habit) {
-      const streak = computeStreak(habit, state.checks, state.logs, today);
+      const streak = computeStreak(habit, state.checks, state.logs, today, state.settings.vacationUntil);
       
       // Feedback: Динамический остров + Конфетти
       islandManager.show({
@@ -48,7 +48,8 @@ export class HabitActionController {
   }
 
   static performPlanB(habitId: string): void {
-    const today = getTodayKey();
+    const state = storage.getState();
+    const today = getTodayKey(state.settings.dayBoundaryHour);
     const prev = storage.getCheck(habitId, today);
     
     storage.setCheck(habitId, today, {
@@ -69,7 +70,8 @@ export class HabitActionController {
   }
 
   static performSkip(habitId: string, reason: string): void {
-    const today = getTodayKey();
+    const state = storage.getState();
+    const today = getTodayKey(state.settings.dayBoundaryHour);
     const prev = storage.getCheck(habitId, today);
     
     storage.setCheck(habitId, today, {

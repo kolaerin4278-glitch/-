@@ -3,17 +3,21 @@ import {
   DEFAULT_SHIELDS,
   HABIT_TYPES,
   MAX_CAPSULE_LEN,
+  MAX_HABIT_DESCRIPTION_LEN,
   MAX_HABIT_TITLE_LEN,
   MAX_NORM_LEN,
   MAX_RITUAL_STEPS,
   MAX_STEP_MINUTES,
   MAX_TRIGGER_LEN,
   MIN_STEP_MINUTES,
-  SPHERES
+  SPHERES,
+  TRASH_RETENTION_DAYS
 } from '../constants';
 import { BusinessRuleError, ValidationError } from './errors';
 import { createEntityId } from './id';
 import { sanitizeIcon } from './schema';
+
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 import type { AppState, Habit, Ritual, RitualStep, UserSettings } from './types';
 
 export function cloneValue<T>(value: T): T {
@@ -41,6 +45,8 @@ export function createDefaultSettings(): UserSettings {
     quietHoursEnd: '08:00',
     digestTime: '21:00',
     historyDepthDays: 365,
+    trashRetentionDays: TRASH_RETENTION_DAYS,
+    trashReadOnly: false,
     completedAccordionOpen: false,
     onboardingCompleted: false,
     swipeHintsShownCount: 0,
@@ -78,6 +84,10 @@ export interface CreateHabitInput {
   contextLocation?: string;
   norm?: string;
   planB?: string;
+  microPlanB?: string;
+  description?: string;
+  color?: string;
+  reminder?: Habit['reminder'];
   targetValue?: number;
   unit?: string;
   stepValue?: number;
@@ -161,7 +171,15 @@ export function createHabitEntity(input: CreateHabitInput, currentCount = 0): Ha
     ...(unit !== undefined ? { unit } : {}),
     ...(stepValue !== undefined ? { stepValue } : {}),
     ...(timerMinutes !== undefined ? { timerMinutes } : {}),
-    ...(input.stackAfterId ? { stackAfterId: input.stackAfterId } : {})
+    ...(input.stackAfterId ? { stackAfterId: input.stackAfterId } : {}),
+    ...(input.microPlanB?.trim()
+      ? { microPlanB: input.microPlanB.trim().slice(0, MAX_NORM_LEN) }
+      : {}),
+    ...(input.description?.trim()
+      ? { description: input.description.trim().slice(0, MAX_HABIT_DESCRIPTION_LEN) }
+      : {}),
+    ...(input.color && HEX_COLOR_RE.test(input.color) ? { color: input.color } : {}),
+    ...(input.reminder ? { reminder: input.reminder } : {})
   };
 }
 

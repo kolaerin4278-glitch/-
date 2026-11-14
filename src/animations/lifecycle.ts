@@ -62,7 +62,7 @@ export function animateTrashIn(
  * Карточка «вылетает» из корзины: появляется с увеличением и мягкой
  * пружинной посадкой на своё место в ленте.
  */
-export function animateRestoreOut(element: HTMLElement): void {
+export function animateRestoreOut(element: HTMLElement | null | undefined): void {
   if (!element || lifecycle.prefersReducedMotion()) return;
 
   element.animate(

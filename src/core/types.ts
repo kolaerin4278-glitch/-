@@ -12,6 +12,15 @@ export interface HabitSchedule {
   readonly timesPerWeek?: number;
 }
 
+/** Напоминание о привычке (локальное время + дни недели). */
+export interface HabitReminder {
+  /** Время в формате HH:MM. */
+  readonly time: string;
+  /** Дни недели: 1 (Пн) .. 7 (Вс). Пустой массив — каждый день. */
+  readonly days: readonly number[];
+  readonly enabled: boolean;
+}
+
 export interface Habit {
   readonly id: string;
   readonly title: string;
@@ -22,6 +31,14 @@ export interface Habit {
   readonly contextLocation?: string;
   readonly norm: string;
   readonly planB: string;
+  /** Микро-версия Плана Б — однократное действие «на 10 секунд» (п. 0334). */
+  readonly microPlanB?: string;
+  /** Подробное описание привычки (п. 0312). */
+  readonly description?: string;
+  /** Пользовательский цвет карточки — hex (п. 0318). */
+  readonly color?: string;
+  /** Напоминание о привычке (п. 0311, 0327). */
+  readonly reminder?: HabitReminder;
   readonly targetValue?: number;
   readonly unit?: string;
   readonly stepValue?: number;
@@ -129,6 +146,10 @@ export interface UserSettings {
   readonly quietHoursEnd: string;
   readonly digestTime: string;
   readonly historyDepthDays: number;
+  /** Сколько дней удалённые привычки хранятся в корзине (п. 0378). */
+  readonly trashRetentionDays: number;
+  /** Корзина открыта только для чтения — скрыть действия восстановления/удаления (п. 0376). */
+  readonly trashReadOnly: boolean;
   readonly completedAccordionOpen: boolean;
   readonly onboardingCompleted: boolean;
   readonly swipeHintsShownCount: number;

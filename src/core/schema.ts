@@ -1,6 +1,7 @@
 import {
   HABIT_TYPES,
   MAX_CAPSULE_LEN,
+  MAX_HABIT_DESCRIPTION_LEN,
   MAX_HABIT_TITLE_LEN,
   MAX_NORM_LEN,
   MAX_RITUAL_STEPS,
@@ -21,6 +22,8 @@ export type SafeParseResult<T> =
   | { readonly success: false; readonly error: ValidationError };
 
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const VALID_SPHERES = new Set<string>(Object.values(SPHERES));
 const VALID_STATUSES = new Set<string>(Object.values(STATUS));
 const VALID_HABIT_TYPES = new Set<string>(Object.values(HABIT_TYPES));
@@ -122,7 +125,8 @@ export function parseHabitRecord(raw: unknown): SafeParseResult<Habit> {
     (raw['schedule']['type'] === 'daily' ||
       raw['schedule']['type'] === 'weekdays' ||
       raw['schedule']['type'] === 'weekends' ||
-      raw['schedule']['type'] === 'custom')
+      raw['schedule']['type'] === 'custom' ||
+      raw['schedule']['type'] === 'times_per_week')
       ? {
           schedule: {
             type: raw['schedule']['type'],
@@ -149,6 +153,28 @@ export function parseHabitRecord(raw: unknown): SafeParseResult<Habit> {
     ...(typeof raw['archivedAt'] === 'string' ? { archivedAt: raw['archivedAt'] } : {}),
     ...(typeof raw['deletedAt'] === 'string' ? { deletedAt: raw['deletedAt'] } : {}),
     ...(typeof raw['graduatedAt'] === 'string' ? { graduatedAt: raw['graduatedAt'] } : {}),
+    ...(typeof raw['microPlanB'] === 'string' && raw['microPlanB'].trim()
+      ? { microPlanB: raw['microPlanB'].trim().slice(0, MAX_NORM_LEN) }
+      : {}),
+    ...(typeof raw['description'] === 'string' && raw['description'].trim()
+      ? { description: raw['description'].trim().slice(0, MAX_HABIT_DESCRIPTION_LEN) }
+      : {}),
+    ...(typeof raw['color'] === 'string' && HEX_COLOR_RE.test(raw['color'])
+      ? { color: raw['color'] }
+      : {}),
+    ...(isRecord(raw['reminder'])
+      ? {
+          reminder: {
+            time: typeof raw['reminder']['time'] === 'string' && TIME_RE.test(raw['reminder']['time'])
+              ? raw['reminder']['time']
+              : '09:00',
+            days: Array.isArray(raw['reminder']['days'])
+              ? (raw['reminder']['days'] as unknown[]).map(Number).filter((d) => d >= 1 && d <= 7)
+              : [],
+            enabled: Boolean(raw['reminder']['enabled'])
+          }
+        }
+      : {}),
     ...(typeof raw['version'] === 'number' ? { version: Math.max(1, Math.trunc(raw['version'])) } : {})
   };
 

@@ -480,5 +480,173 @@
     opacity: 0.55;
     filter: drop-shadow(0 0 4px var(--accent-glow));
   }
+
+  /* ==================== СЧЁТЧИК И ТАЙМЕР (п. 0341–0345) ==================== */
+
+  .habit-counter,
+  .habit-timer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .counter-ring-wrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .counter-ring-bg {
+    stroke: var(--glass-border);
+  }
+
+  .counter-ring-fg {
+    stroke: var(--accent);
+    transition: stroke-dashoffset 0.35s var(--ease-out-soft);
+    filter: drop-shadow(0 0 4px var(--accent-glow));
+  }
+
+  .counter-ring-value {
+    position: absolute;
+    font-size: var(--text-caption);
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .counter-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: var(--text-micro);
+    color: var(--text-tertiary);
+  }
+
+  .counter-target {
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  .counter-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+
+  .counter-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    font-size: var(--text-caption);
+    font-weight: 700;
+    background: var(--glass-surface-2);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    transition: transform 0.18s var(--spring), background 0.2s ease;
+  }
+
+  .counter-btn:active {
+    transform: scale(0.94);
+  }
+
+  .counter-btn--primary {
+    background: var(--accent);
+    color: var(--text-on-accent);
+    border-color: transparent;
+  }
+
+  .timer-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .timer-digits {
+    font-size: var(--text-h2);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    letter-spacing: 0.02em;
+  }
+
+  .timer-label {
+    font-size: var(--text-micro);
+    color: var(--text-tertiary);
+  }
+
+  .timer-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+
+  /* ==================== ЦЕПОЧКИ ПРИВЫЧЕК (п. 0382, 0398) ==================== */
+
+  .stack-chains {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stack-chain {
+    padding: 12px 14px;
+    border-radius: var(--radius-lg);
+    background: var(--glass-surface-1);
+    border: 1px solid var(--glass-border);
+  }
+
+  .stack-chain--medium {
+    border-color: rgba(251, 191, 36, 0.3);
+  }
+
+  .stack-chain--hard {
+    border-color: rgba(251, 113, 133, 0.35);
+    background: var(--coral-glow);
+  }
+
+  .stack-chain-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .stack-chain-level {
+    font-size: var(--text-micro);
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  .stack-chain-energy {
+    font-size: var(--text-micro);
+    color: var(--text-tertiary);
+  }
+
+  .stack-chain-path {
+    font-size: var(--text-caption);
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  .stack-chain-warning {
+    margin-top: 6px;
+    font-size: var(--text-micro);
+    color: var(--coral);
+  }
+
+  .field-error-msg--warn {
+    color: var(--amber);
+  }
 }
 

@@ -121,8 +121,8 @@ export function isHabitScheduledOnDate(habit: Habit, dateKey: string): boolean {
 /**
  * Мемоизированная генерация массива дат (План 10 п. 015)
  */
-export function getPeriodDateKeys(daysBack: number, endKey?: string): string[] {
-  const resolvedEnd = endKey ?? getTodayKey();
+export function getPeriodDateKeys(daysBack: number, endKey?: string, boundaryHour?: number): string[] {
+  const resolvedEnd = endKey ?? getTodayKey(boundaryHour ?? DAY_BOUNDARY_HOUR);
   const cacheKey = `${daysBack}:${resolvedEnd}`;
   const cached = periodKeysCache.get(cacheKey);
   if (cached) return [...cached];

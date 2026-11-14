@@ -1,7 +1,8 @@
 import { fromDateKey, formatDate } from '../date';
 import { storage } from '../storage';
 import { computeStreak } from '../streak';
-import { STATUS } from '../constants';
+import { HABIT_TYPES, STATUS } from '../constants';
+import { renderHabitActionBlock } from './HabitProgress';
 
 export function renderTodayPageHTML(): string {
   const state = storage.getState();
@@ -12,7 +13,7 @@ export function renderTodayPageHTML(): string {
   const log = storage.getDayLog(dateKey);
   const streakMap = new Map<string, number>();
   for (const habit of habits) {
-    streakMap.set(habit.id, computeStreak(habit, state.checks, state.logs, dateKey));
+    streakMap.set(habit.id, computeStreak(habit, state.checks, state.logs, dateKey, state.settings.vacationUntil));
   }
 
   const doneCount = habits.filter((h) => {
@@ -84,10 +85,16 @@ export function renderTodayPageHTML(): string {
                     </div>
                   </div>
                   <div class="habit-actions">
+                    ${renderHabitActionBlock(h, check)}
+                    ${
+                      h.type === HABIT_TYPES.COUNTER || h.type === HABIT_TYPES.TIMER
+                        ? ''
+                        : `
                     <button type="button" class="habit-action-btn tap-feedback ${check?.status === 'full' ? 'primary' : ''}"
                             data-action="full" aria-pressed="${check?.status === 'full'}">Норма</button>
                     <button type="button" class="habit-action-btn tap-feedback ${check?.status === 'plan_b' ? 'amber' : ''}"
-                            data-action="planb" aria-pressed="${check?.status === 'plan_b'}">План Б</button>
+                            data-action="planb" aria-pressed="${check?.status === 'plan_b'}">План Б</button>`
+                    }
                   </div>
                 </div>
               </div>

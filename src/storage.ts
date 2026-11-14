@@ -184,7 +184,8 @@ class StorageFacade {
   }
 
   private purgeExpiredTrashInPlace(state: AppState): void {
-    const cutoffMs = Date.now() - TRASH_RETENTION_DAYS * 86_400_000;
+    const retentionDays = state.settings?.trashRetentionDays ?? TRASH_RETENTION_DAYS;
+    const cutoffMs = Date.now() - retentionDays * 86_400_000;
     state.habits = state.habits.filter((h) => {
       if (!h.deletedAt) return true;
       const deletedMs = Date.parse(h.deletedAt);
@@ -348,6 +349,10 @@ class StorageFacade {
       ...(source.energyCost !== undefined ? { energyCost: source.energyCost } : {}),
       ...(source.schedule !== undefined ? { schedule: cloneValue(source.schedule) } : {}),
       ...(source.masteryTargetDays !== undefined ? { masteryTargetDays: source.masteryTargetDays } : {}),
+      ...(source.microPlanB !== undefined ? { microPlanB: source.microPlanB } : {}),
+      ...(source.description !== undefined ? { description: source.description } : {}),
+      ...(source.color !== undefined ? { color: source.color } : {}),
+      ...(source.reminder !== undefined ? { reminder: cloneValue(source.reminder) } : {}),
       keystone: source.keystone,
       incognito: source.incognito,
       capsule: source.capsule

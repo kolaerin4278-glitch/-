@@ -11,11 +11,12 @@ import { LifecycleController } from './controllers/LifecycleController';
 import { SettingsController } from './controllers/SettingsController';
 import { RitualController } from './controllers/RitualController';
 import { HabitDndController } from './controllers/HabitDndController';
+import { ProgressController } from './controllers/ProgressController';
 import { drawStackLine } from './animations/lifecycle';
 import { telegram } from './telegram';
 import { modalManager } from './ui/modal';
 import { islandManager } from './ui/island';
-import { animationManager, applyStagger } from './animations';
+import { animationManager, applyStagger, animateRestoreOut } from './animations';
 
 async function bootstrap() {
   await storage.whenReady();
@@ -31,6 +32,9 @@ async function bootstrap() {
   
   // Текущая страница
   let currentPage = 'today';
+
+  // Отмена предыдущей привязки счётчиков/таймеров при перерисовке ленты
+  let progressAbort: AbortController | null = null;
 
   // Контроллер ритуалов (живёт на протяжении всей сессии: держит активную сессию)
   const ritualController = new RitualController(() => render());
@@ -141,6 +145,11 @@ async function bootstrap() {
         // Drag-and-drop сортировка карточек
         HabitDndController.enable(list);
 
+        // Счётчики и таймеры (п. 0341–0345)
+        progressAbort?.abort();
+        progressAbort = new AbortController();
+        ProgressController.bind(list, progressAbort.signal);
+
         // Линии связи между привычками (Habit Stack)
         drawStackConnectors(list);
       }
@@ -226,8 +235,12 @@ async function bootstrap() {
         e.stopPropagation();
         const habitId = (btn as HTMLElement).dataset.habitId;
         if (habitId) {
-          storage.archiveHabit(habitId, false);
-          render();
+          const card = btn.closest<HTMLElement>('.archived-habit-card');
+          animateRestoreOut(card);
+          window.setTimeout(() => {
+            storage.archiveHabit(habitId, false);
+            render();
+          }, 200);
         }
       });
     });
@@ -238,8 +251,9 @@ async function bootstrap() {
         e.stopPropagation();
         const habitId = (btn as HTMLElement).dataset.habitId;
         if (habitId) {
-          TrashController.restore(habitId);
-          render();
+          const card = btn.closest<HTMLElement>('.deleted-habit-card');
+          LifecycleController.restoreFromTrash(habitId, card);
+          window.setTimeout(render, 260);
         }
       });
     });

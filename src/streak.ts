@@ -56,7 +56,8 @@ export function computeLongestStreak(
   checks: ReadonlyMap<string, Check>,
   logs: ReadonlyMap<string, DayLog>,
   todayKey: string,
-  lookbackDays = 365
+  lookbackDays = 365,
+  vacationUntil?: string
 ): number {
   let best = 0;
   let running = 0;
@@ -69,7 +70,7 @@ export function computeLongestStreak(
     if (check && (check.status === STATUS.FULL || check.status === STATUS.PLAN_B)) {
       running++;
       if (running > best) best = running;
-    } else if (isProtectedFreezeDay(key, dayLog) || !isHabitScheduledOnDate(habit, key)) {
+    } else if (isProtectedFreezeDay(key, dayLog, vacationUntil) || !isHabitScheduledOnDate(habit, key)) {
       // продолжаем без сброса
     } else if (offset === 0 && !check) {
       // сегодняшний незавершённый день не обнуляет лучший результат

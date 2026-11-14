@@ -1015,6 +1015,197 @@
     background: var(--accent-glow);
   }
 
+  .form-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .emoji-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .emoji-picker-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .emoji-picker-tab {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--glass-surface-1);
+    border: 1px solid var(--glass-border);
+    font-size: 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s var(--spring), border-color 0.2s ease;
+  }
+
+  .emoji-picker-tab:active {
+    transform: scale(0.92);
+  }
+
+  .emoji-picker-tab.active {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .weekday-picker {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .weekday-chip {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--glass-surface-2);
+    border: 1px solid var(--glass-border);
+    font-size: var(--text-caption);
+    font-weight: 700;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s var(--spring), border-color 0.2s ease;
+  }
+
+  .weekday-chip:active {
+    transform: scale(0.9);
+  }
+
+  .weekday-chip.selected {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    color: var(--text-primary);
+  }
+
+  .color-palette {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .color-swatch {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: transform 0.2s var(--spring);
+  }
+
+  .color-swatch:active {
+    transform: scale(0.88);
+  }
+
+  .color-swatch.selected {
+    border-color: var(--text-primary);
+    transform: scale(1.12);
+  }
+
+  .toggle-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--text-micro);
+    color: var(--text-secondary);
+  }
+
+  .input--error {
+    border-color: var(--coral) !important;
+  }
+
+  .form-progress {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 28px;
+    padding: 0 12px;
+    margin-bottom: 10px;
+    border-radius: 999px;
+    background: var(--glass-surface-1);
+    border: 1px solid var(--glass-border);
+    overflow: hidden;
+  }
+
+  .form-progress::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: var(--form-progress, 0%);
+    background: var(--accent-glow);
+    transition: width 0.4s var(--ease-out-soft);
+    pointer-events: none;
+  }
+
+  .form-progress-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-glow));
+    opacity: 0.6;
+    transition: width 0.4s var(--ease-out-soft);
+    pointer-events: none;
+  }
+
+  .form-progress-label {
+    position: relative;
+    font-size: var(--text-micro);
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  .form-saved-badge {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--glass-surface-3);
+    border: 1px solid var(--accent);
+    color: var(--text-primary);
+    font-size: var(--text-micro);
+    font-weight: 700;
+    opacity: 0;
+    transform: translateY(-8px) scale(0.9);
+    transition: opacity 0.28s var(--ease-out-soft), transform 0.28s var(--spring);
+    pointer-events: none;
+  }
+
+  .form-saved-badge.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .form-saved-badge-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--glass-surface-1);
+    font-size: 11px;
+    font-weight: 900;
+  }
+
   .toggle-check-row {
     display: flex;
     align-items: center;

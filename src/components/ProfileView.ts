@@ -1,6 +1,8 @@
 import { storage } from '../storage';
 import { SPHERE_META, type Sphere } from '../constants';
 import { getSettingsHTML } from './SettingsView';
+import { analyzeStack, formatStackChain } from '../core/stack';
+import { escapeHtml } from '../utils';
 
 /**
  * Экран профиля: сводка по привычкам, доступ к архиву, корзине и настройкам.
@@ -61,6 +63,11 @@ export function renderProfileView(): string {
       </section>
 
       <section class="profile-section">
+        <h2 class="profile-section-title">Цепочки привычек</h2>
+        ${renderStackChains(active)}
+      </section>
+
+      <section class="profile-section">
         <h2 class="profile-section-title">Управление</h2>
         <div class="profile-links">
           <button type="button" class="profile-link tap-feedback" data-page="archive">
@@ -99,6 +106,50 @@ export function renderProfileView(): string {
         <h2 class="profile-section-title">Настройки</h2>
         ${getSettingsHTML()}
       </section>
+    </div>
+  `;
+}
+
+/**
+ * Визуализация цепочек Habit Stacking в профиле (п. 0382)
+ * вместе с индикатором сложности цепочки (п. 0398).
+ */
+function renderStackChains(active: readonly import('../core/types').Habit[]): string {
+  // Корни цепочек — привычки, к которым не привязана другая привычка
+  const hasParent = new Set(active.map((h) => h.stackAfterId).filter(Boolean));
+  const roots = active.filter((h) => !hasParent.has(h.id));
+
+  const chains = roots
+    .map((root) => analyzeStack(root.id, active))
+    .filter((a) => a.length > 1);
+
+  if (chains.length === 0) {
+    return `
+      <div class="page-placeholder">
+        Цепочек пока нет.<br>
+        Свяжите привычки в конструкторе — и они выполнятся друг за другом.
+      </div>
+    `;
+  }
+
+  return `
+    <div class="stack-chains">
+      ${chains
+        .map(
+          (a) => `
+            <div class="stack-chain stack-chain--${a.level}">
+              <div class="stack-chain-head">
+                <span class="stack-chain-level" data-level="${a.level}">
+                  ${a.level === 'hard' ? '⚠️ сложная' : a.level === 'medium' ? '⚡ средняя' : '✓ лёгкая'}
+                </span>
+                <span class="stack-chain-energy">${a.totalEnergy}⚡ · ${a.length} звена</span>
+              </div>
+              <div class="stack-chain-path">${escapeHtml(formatStackChain(a.chain))}</div>
+              ${a.warning ? `<div class="stack-chain-warning">${escapeHtml(a.warning)}</div>` : ''}
+            </div>
+          `
+        )
+        .join('')}
     </div>
   `;
 }

@@ -2,6 +2,7 @@ import {
   HABIT_TYPES,
   MASTERY_TARGETS,
   MAX_CAPSULE_LEN,
+  MAX_HABIT_DESCRIPTION_LEN,
   MAX_HABIT_TITLE_LEN,
   SCHEDULE_TYPES,
   SPHERES,
@@ -15,11 +16,25 @@ import { telegram } from '../telegram';
 import { modalManager } from '../ui/modal';
 import { escapeHtml } from '../utils';
 import { HABIT_TEMPLATES, type HabitTemplate } from './HabitLibrary';
+import { bindEmojiPicker, renderEmojiPickerHTML } from './EmojiPicker';
+import { generatePlanB, generateTrigger } from '../core/planB';
+import { validateStackLink } from '../core/stack';
 
-const EMOJI_PALETTE = [
-  '✨', '💧', '🤸', '📚', '🎯', '🧘', '🚶', '💪',
-  '🧠', '📝', '🌱', '🌙', '☀️', '🍎', '🎸', '💎'
-] as const;
+/** Дни недели для выбора расписания (п. 0325, 0371). */
+const WEEKDAY_LABELS: ReadonlyArray<{ value: number; short: string; label: string }> = [
+  { value: 1, short: 'Пн', label: 'Понедельник' },
+  { value: 2, short: 'Вт', label: 'Вторник' },
+  { value: 3, short: 'Ср', label: 'Среда' },
+  { value: 4, short: 'Чт', label: 'Четверг' },
+  { value: 5, short: 'Пт', label: 'Пятница' },
+  { value: 6, short: 'Сб', label: 'Суббота' },
+  { value: 7, short: 'Вс', label: 'Воскресенье' }
+];
+
+/** Палитра пользовательских цветов карточки (п. 0318). */
+const CARD_COLOR_PALETTE: readonly string[] = [
+  '#34D399', '#38BDF8', '#FBBF24', '#C084FC', '#FB7185', '#F472B6', '#A3E635', '#22D3EE'
+];
 
 export function renderHabitPreviewHTML(data: {
   title: string;
@@ -63,6 +78,15 @@ export function getHabitFormHTML(habitId?: string): string {
   const curEnergy = existing?.energyCost ?? 2;
   const curMastery = existing?.masteryTargetDays ?? 60;
   const capsuleVal = existing?.capsule ?? '';
+  const curDays = existing?.schedule?.daysOfWeek ?? [];
+  const curTimesPerWeek = existing?.schedule?.timesPerWeek ?? 3;
+  const curColor = existing?.color ?? '';
+  const curReminder = existing?.reminder;
+  const curReminderTime = curReminder?.time ?? '09:00';
+  const curReminderDays = curReminder?.days ?? [];
+  const curReminderEnabled = curReminder?.enabled ?? false;
+  const descriptionVal = existing?.description ?? '';
+  const microPlanBVal = existing?.microPlanB ?? '';
 
   return `
     <form id="habitForm" class="habit-form" novalidate>
@@ -83,6 +107,16 @@ export function getHabitFormHTML(habitId?: string): string {
           <input type="text" id="tplSearchInput" placeholder="Поиск: вода, чтение, фокус, сон...">
         </div>
         <div id="tplListContainer" style="display:flex; flex-direction:column; gap:6px; max-height:190px; overflow-y:auto;"></div>
+      </div>
+
+      <div id="habitFormProgress" class="form-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="form-progress-bar" id="habitFormProgressBar"></div>
+        <span class="form-progress-label" id="habitFormProgressLabel">Заполнено 0%</span>
+      </div>
+
+      <div id="habitSavedBadge" class="form-saved-badge" role="status" aria-live="polite" hidden>
+        <span class="form-saved-badge-icon">✓</span>
+        <span class="form-saved-badge-text">Сохранено</span>
       </div>
 
       <div id="habitLivePreviewBox">
@@ -137,12 +171,7 @@ export function getHabitFormHTML(habitId?: string): string {
         </div>
       </div>
 
-      <div class="emoji-picker-grid" role="group" aria-label="Быстрый выбор иконки">
-        ${EMOJI_PALETTE.map(
-          (em) =>
-            `<button type="button" class="emoji-pick-btn ${curIcon === em ? 'selected' : ''}" data-pick-emoji="${em}" aria-label="Выбрать ${em}">${em}</button>`
-        ).join('')}
-      </div>
+      ${renderEmojiPickerHTML(curIcon)}
 
       <div class="form-row">
         <div class="form-field">
@@ -159,8 +188,29 @@ export function getHabitFormHTML(habitId?: string): string {
             <option value="daily" ${curSched === 'daily' ? 'selected' : ''}>Каждый день</option>
             <option value="weekdays" ${curSched === 'weekdays' ? 'selected' : ''}>Только будни (Пн–Пт)</option>
             <option value="weekends" ${curSched === 'weekends' ? 'selected' : ''}>Выходные (Сб–Вс)</option>
+            <option value="custom" ${curSched === 'custom' ? 'selected' : ''}>Свои дни недели</option>
+            <option value="times_per_week" ${curSched === 'times_per_week' ? 'selected' : ''}>N раз в неделю</option>
           </select>
         </div>
+      </div>
+
+      <div id="customDaysRow" class="form-field" style="${curSched === 'custom' ? '' : 'display:none;'}">
+        <label>Выберите дни недели</label>
+        <div class="weekday-picker" role="group" aria-label="Дни недели">
+          ${WEEKDAY_LABELS.map(
+            (d) => `
+              <button type="button" class="weekday-chip ${curDays.includes(d.value) ? 'selected' : ''}"
+                      data-weekday="${d.value}" aria-pressed="${curDays.includes(d.value)}"
+                      aria-label="${d.label}">${d.short}</button>
+            `
+          ).join('')}
+        </div>
+        <input type="hidden" id="habitCustomDays" name="customDays" value="${curDays.join(',')}">
+      </div>
+
+      <div id="timesPerWeekRow" class="form-field" style="${curSched === 'times_per_week' ? '' : 'display:none;'}">
+        <label for="habitTimesPerWeekInput">Сколько раз в неделю</label>
+        <input type="number" id="habitTimesPerWeekInput" name="timesPerWeek" inputmode="numeric" min="1" max="7" step="1" value="${curTimesPerWeek}">
       </div>
 
       <div id="counterFieldsRow" class="form-row" style="${curType === 'counter' ? '' : 'display:none;'}">
@@ -183,7 +233,10 @@ export function getHabitFormHTML(habitId?: string): string {
       </div>
 
       <div class="form-field">
-        <label for="habitTriggerInput">Намерение реализации (После чего / Где)</label>
+        <div class="form-label-row">
+          <label for="habitTriggerInput">Намерение реализации (После чего / Где)</label>
+          <button type="button" id="generateTriggerBtn" class="undo-inline-btn">Подсказка</button>
+        </div>
         <input
           type="text"
           id="habitTriggerInput"
@@ -200,14 +253,66 @@ export function getHabitFormHTML(habitId?: string): string {
           <input type="text" id="habitNormInput" name="norm" maxlength="50" placeholder="30 мин / 20 стр." value="${escapeHtml(existing?.norm ?? 'Выполнено')}">
         </div>
         <div class="form-field">
-          <label for="habitPlanBInput">План Б (правило 2 минут)</label>
+          <div class="form-label-row">
+            <label for="habitPlanBInput">План Б (правило 2 минут)</label>
+            <button type="button" id="generatePlanBBtn" class="undo-inline-btn">Сгенерировать</button>
+          </div>
           <input type="text" id="habitPlanBInput" name="planB" maxlength="50" placeholder="2 мин / 2 стр." value="${escapeHtml(existing?.planB ?? 'Минимум 2 мин')}">
         </div>
       </div>
 
+      <div class="form-field">
+        <label for="habitMicroPlanBInput">Микро-План Б (одно действие за 10 секунд)</label>
+        <input type="text" id="habitMicroPlanBInput" name="microPlanB" maxlength="50" placeholder="Надеть кроссовки" value="${escapeHtml(microPlanBVal)}">
+      </div>
+
+      <div class="form-field">
+        <label for="habitDescriptionInput">Описание привычки</label>
+        <textarea
+          id="habitDescriptionInput"
+          name="description"
+          maxlength="${MAX_HABIT_DESCRIPTION_LEN}"
+          rows="3"
+          placeholder="Зачем это нужно, как выглядит результат, какие типичные сбои..."
+        >${escapeHtml(descriptionVal)}</textarea>
+      </div>
+
+      <div class="form-field">
+        <label>Цвет карточки</label>
+        <div class="color-palette" role="group" aria-label="Цвет карточки">
+          ${CARD_COLOR_PALETTE.map(
+            (c) => `
+              <button type="button" class="color-swatch ${curColor === c ? 'selected' : ''}"
+                      data-card-color="${c}" style="background:${c};"
+                      aria-label="Цвет ${c}" aria-pressed="${curColor === c}"></button>
+            `
+          ).join('')}
+        </div>
+        <input type="hidden" id="habitColorInput" name="color" value="${escapeHtml(curColor)}">
+      </div>
+
+      <div class="form-field">
+        <div class="form-label-row">
+          <label for="habitReminderTimeInput">Напоминание</label>
+          <label class="toggle-inline" for="habitReminderEnabledCheck">
+            <input type="checkbox" id="habitReminderEnabledCheck" name="reminderEnabled" ${curReminderEnabled ? 'checked' : ''}>
+            <span>Включено</span>
+          </label>
+        </div>
+        <input type="time" id="habitReminderTimeInput" name="reminderTime" value="${escapeHtml(curReminderTime)}" aria-label="Время напоминания">
+        <div class="weekday-picker" role="group" aria-label="Дни напоминания">
+          ${WEEKDAY_LABELS.map(
+            (d) => `
+              <button type="button" class="weekday-chip ${curReminderDays.includes(d.value) ? 'selected' : ''}"
+                      data-reminder-day="${d.value}" aria-pressed="${curReminderDays.includes(d.value)}"
+                      aria-label="${d.label}">${d.short}</button>
+            `
+          ).join('')}
+        </div>
+        <input type="hidden" id="habitReminderDays" name="reminderDays" value="${curReminderDays.join(',')}">
+      </div>
+
       <div class="form-row">
-        <div class="form-field">
-          <label for="habitEnergyCostSelect">Энергозатратность</label>
           <select id="habitEnergyCostSelect" name="energyCost">
             <option value="1" ${curEnergy === 1 ? 'selected' : ''}>⚡ Лёгкая (1 ед.)</option>
             <option value="2" ${curEnergy === 2 ? 'selected' : ''}>⚡⚡ Средняя (2 ед.)</option>
@@ -237,6 +342,7 @@ export function getHabitFormHTML(habitId?: string): string {
                   )
                   .join('')}
               </select>
+              <div id="habitStackHint" class="field-error-msg" role="status"></div>
             </div>`
           : ''
       }
@@ -340,6 +446,109 @@ export function bindHabitFormModal(
     { signal }
   );
 
+  /* ==================== Индикатор прогресса формы (п. 0314) ==================== */
+
+  const progressBox = container.querySelector('#habitFormProgress') as HTMLElement | null;
+  const progressBar = container.querySelector('#habitFormProgressBar') as HTMLElement | null;
+  const progressLabel = container.querySelector('#habitFormProgressLabel') as HTMLElement | null;
+
+  /** Обязательные для заполнения поля формы. */
+  const REQUIRED_FIELDS = ['title', 'trigger', 'norm', 'planB'] as const;
+
+  const refreshProgress = (): void => {
+    if (!progressBar || !progressLabel) return;
+    const fd = new FormData(form);
+    const filled = REQUIRED_FIELDS.filter((f) => String(fd.get(f) ?? '').trim().length > 0).length;
+    const percent = Math.round((filled / REQUIRED_FIELDS.length) * 100);
+    progressBar.style.width = `${percent}%`;
+    progressBox?.setAttribute('aria-valuenow', String(percent));
+    progressLabel.textContent = `Заполнено ${percent}%`;
+  };
+
+  /* ==================== Сохранение черновика (п. 0316) ==================== */
+
+  const DRAFT_KEY = 'hd_habit_draft_v1';
+
+  const saveDraft = (): void => {
+    try {
+      const fd = new FormData(form);
+      const data: Record<string, string> = {};
+      for (const [k, v] of fd.entries()) {
+        if (typeof v === 'string') data[k] = v;
+      }
+      data['__editId'] = habitId ?? '';
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+    } catch {
+      // sessionStorage может быть недоступен — черновик не критичен
+    }
+  };
+
+  const restoreDraft = (): void => {
+    if (habitId) return; // при редактировании черновик не восстанавливаем
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw) as Record<string, string>;
+      if (!data || data['__editId']) return;
+      for (const [k, v] of Object.entries(data)) {
+        if (k === '__editId' || k.startsWith('__')) continue;
+        const field = form.elements.namedItem(k);
+        if (!field) continue;
+        if (field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio')) {
+          field.checked = field.value === v;
+        } else if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
+          field.value = v;
+        }
+      }
+      refreshPreview();
+      refreshProgress();
+
+      // Подсветка чипов, выбранных в черновике
+      const customDays = (data['customDays'] ?? '').split(',').filter(Boolean).map(Number);
+      container.querySelectorAll<HTMLButtonElement>('[data-weekday]').forEach((btn) => {
+        const d = Number(btn.dataset['weekday'] ?? '0');
+        const on = customDays.includes(d);
+        btn.classList.toggle('selected', on);
+        btn.setAttribute('aria-pressed', String(on));
+      });
+      const remDays = (data['reminderDays'] ?? '').split(',').filter(Boolean).map(Number);
+      container.querySelectorAll<HTMLButtonElement>('[data-reminder-day]').forEach((btn) => {
+        const d = Number(btn.dataset['reminderDay'] ?? '0');
+        const on = remDays.includes(d);
+        btn.classList.toggle('selected', on);
+        btn.setAttribute('aria-pressed', String(on));
+      });
+      const draftColor = data['color'] ?? '';
+      container.querySelectorAll<HTMLButtonElement>('[data-card-color]').forEach((btn) => {
+        const on = btn.dataset['cardColor'] === draftColor;
+        btn.classList.toggle('selected', on);
+        btn.setAttribute('aria-pressed', String(on));
+      });
+    } catch {
+      // Повреждённый черновик игнорируем
+    }
+  };
+
+  const clearDraft = (): void => {
+    try {
+      sessionStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // ignore
+    }
+  };
+
+  form.addEventListener('input', () => {
+    refreshProgress();
+    saveDraft();
+  }, { signal });
+  form.addEventListener('change', () => {
+    refreshProgress();
+    saveDraft();
+  }, { signal });
+
+  restoreDraft();
+  refreshProgress();
+
   typeSelect?.addEventListener(
     'change',
     () => {
@@ -364,6 +573,180 @@ export function bindHabitFormModal(
       { signal }
     );
   });
+
+  // Выбор дней недели для расписания (п. 0325, 0371)
+  const scheduleSelect = container.querySelector('#habitScheduleSelect') as HTMLSelectElement | null;
+  const customDaysRow = container.querySelector('#customDaysRow') as HTMLElement | null;
+  const timesPerWeekRow = container.querySelector('#timesPerWeekRow') as HTMLElement | null;
+  const customDaysInput = container.querySelector('#habitCustomDays') as HTMLInputElement | null;
+
+  const toggleScheduleRows = (): void => {
+    const v = scheduleSelect?.value ?? 'daily';
+    if (customDaysRow) customDaysRow.style.display = v === 'custom' ? '' : 'none';
+    if (timesPerWeekRow) timesPerWeekRow.style.display = v === 'times_per_week' ? '' : 'none';
+  };
+
+  scheduleSelect?.addEventListener('change', toggleScheduleRows, { signal });
+  toggleScheduleRows();
+
+  container.querySelectorAll<HTMLButtonElement>('[data-weekday]').forEach((btn) => {
+    btn.addEventListener(
+      'click',
+      () => {
+        const day = Number(btn.dataset['weekday'] ?? '0');
+        if (!day) return;
+        const selected = new Set(
+          (customDaysInput?.value ?? '').split(',').filter(Boolean).map(Number)
+        );
+        if (selected.has(day)) selected.delete(day);
+        else selected.add(day);
+        const days = [...selected].sort((a, b) => a - b);
+        if (customDaysInput) customDaysInput.value = days.join(',');
+        btn.classList.toggle('selected');
+        btn.setAttribute('aria-pressed', String(selected.has(day)));
+        telegram.hapticSelection();
+      },
+      { signal }
+    );
+  });
+
+  // Выбор дней напоминания (п. 0327)
+  const reminderDaysInput = container.querySelector('#habitReminderDays') as HTMLInputElement | null;
+  container.querySelectorAll<HTMLButtonElement>('[data-reminder-day]').forEach((btn) => {
+    btn.addEventListener(
+      'click',
+      () => {
+        const day = Number(btn.dataset['reminderDay'] ?? '0');
+        if (!day) return;
+        const selected = new Set(
+          (reminderDaysInput?.value ?? '').split(',').filter(Boolean).map(Number)
+        );
+        if (selected.has(day)) selected.delete(day);
+        else selected.add(day);
+        const days = [...selected].sort((a, b) => a - b);
+        if (reminderDaysInput) reminderDaysInput.value = days.join(',');
+        btn.classList.toggle('selected');
+        btn.setAttribute('aria-pressed', String(selected.has(day)));
+        telegram.hapticSelection();
+      },
+      { signal }
+    );
+  });
+
+  // Выбор цвета карточки (п. 0318)
+  const colorInput = container.querySelector('#habitColorInput') as HTMLInputElement | null;
+  container.querySelectorAll<HTMLButtonElement>('[data-card-color]').forEach((btn) => {
+    btn.addEventListener(
+      'click',
+      () => {
+        const color = btn.dataset['cardColor'] ?? '';
+        if (colorInput) colorInput.value = colorInput.value === color ? '' : color;
+        container.querySelectorAll('[data-card-color]').forEach((b) => {
+          b.classList.remove('selected');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        if (colorInput?.value) {
+          btn.classList.add('selected');
+          btn.setAttribute('aria-pressed', 'true');
+        }
+        telegram.hapticSelection();
+        refreshPreview();
+      },
+      { signal }
+    );
+  });
+
+  // Валидация дубликатов привычек (п. 0328)
+  const titleError = container.querySelector('#habitTitleError') as HTMLElement | null;
+  const validateTitle = (): void => {
+    if (!titleError) return;
+    const title = titleInput.value.trim().toLowerCase();
+    const duplicate = storage
+      .getHabits()
+      .find((h) => h.id !== habitId && h.title.trim().toLowerCase() === title);
+    if (title && duplicate) {
+      titleError.textContent = 'Такая привычка уже есть';
+      titleInput.classList.add('input--error');
+    } else if (title.length > MAX_HABIT_TITLE_LEN) {
+      titleError.textContent = `Не больше ${MAX_HABIT_TITLE_LEN} символов`;
+      titleInput.classList.add('input--error');
+    } else {
+      titleError.textContent = '';
+      titleInput.classList.remove('input--error');
+    }
+  };
+
+  titleInput.addEventListener('input', validateTitle, { signal });
+  validateTitle();
+
+  // Категоризированный пикер иконок (п. 0303)
+  bindEmojiPicker(container, signal, (emoji) => {
+    iconInput.value = emoji;
+    telegram.hapticSelection();
+    refreshPreview();
+  });
+
+  // Предупреждение о сложности цепочки Habit Stack (п. 0398)
+  const stackSelect = container.querySelector('#habitStackSelect') as HTMLSelectElement | null;
+  const stackHint = container.querySelector('#habitStackHint') as HTMLElement | null;
+
+  const refreshStackHint = (): void => {
+    if (!stackSelect || !stackHint) return;
+    const stackAfter = stackSelect.value.trim();
+    if (!stackAfter) {
+      stackHint.textContent = '';
+      stackHint.classList.remove('field-error-msg--warn');
+      return;
+    }
+    const result = validateStackLink(stackAfter, storage.getHabits());
+    stackHint.textContent = result.message ?? '';
+    stackHint.classList.toggle('field-error-msg--warn', !result.ok);
+  };
+
+  stackSelect?.addEventListener('change', refreshStackHint, { signal });
+  refreshStackHint();
+
+  // Генератор «Плана Б» (п. 0305, 0342)
+  const generatePlanBBtn = container.querySelector('#generatePlanBBtn');
+  generatePlanBBtn?.addEventListener(
+    'click',
+    () => {
+      const t = (typeSelect.value as HabitType) ?? HABIT_TYPES.BINARY;
+      const targetInp = container.querySelector('#habitTargetInput') as HTMLInputElement | null;
+      const unitInp = container.querySelector('#habitUnitInput') as HTMLInputElement | null;
+      const timerInp = container.querySelector('#habitTimerMinInput') as HTMLInputElement | null;
+
+      const planB = generatePlanB({
+        type: t,
+        norm: normInput.value.trim(),
+        targetValue: targetInp ? Number(targetInp.value) : undefined,
+        unit: unitInp?.value.trim(),
+        timerMinutes: timerInp ? Number(timerInp.value) : undefined
+      });
+
+      planBInput.value = planB;
+      telegram.haptic('light');
+      refreshPreview();
+    },
+    { signal }
+  );
+
+  // Подсказка намерения реализации (п. 0304, 0317)
+  const generateTriggerBtn = container.querySelector('#generateTriggerBtn');
+  generateTriggerBtn?.addEventListener(
+    'click',
+    () => {
+      const trigger = generateTrigger(
+        sphereSelect.value,
+        (typeSelect.value as HabitType) ?? HABIT_TYPES.BINARY,
+        titleInput.value.trim()
+      );
+      triggerInput.value = trigger;
+      telegram.haptic('light');
+      refreshPreview();
+    },
+    { signal }
+  );
 
   // Библиотека готовых шаблонов с живым поиском
   const tplBtn = container.querySelector('#openTemplatePickerBtn');
@@ -447,12 +830,35 @@ export function bindHabitFormModal(
     { signal }
   );
 
+  /**
+   * Показывает индикатор «Сохранено» (п. 0339).
+   */
+  const showSavedBadge = (): void => {
+    const badge = container.querySelector('#habitSavedBadge') as HTMLElement | null;
+    if (!badge) return;
+    badge.hidden = false;
+    badge.classList.add('is-visible');
+    window.setTimeout(() => {
+      badge.classList.remove('is-visible');
+    }, 1400);
+  };
+
+  /**
+   * Фокусирует первое поле с ошибкой валидации (п. 0309).
+   */
+  const focusFirstInvalid = (): void => {
+    const invalid = form.querySelector<HTMLElement>('[aria-invalid="true"], .input--error');
+    invalid?.focus();
+    invalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   const submitLogic = (): void => {
     const title = titleInput.value.trim();
     if (!title) {
       titleInput.setAttribute('aria-invalid', 'true');
       if (titleErr) titleErr.textContent = 'Пожалуйста, укажите название привычки';
-      titleInput.focus();
+      // Автоматическая фокусировка на ошибочном поле (п. 0309)
+      focusFirstInvalid();
       telegram.hapticNotification('error');
       return;
     }
@@ -467,6 +873,22 @@ export function bindHabitFormModal(
     const energyCostNum = Number(fd.get('energyCost') ?? 2);
     const masteryNum = Number(fd.get('masteryTargetDays') ?? 60);
     const stackAfter = String(fd.get('stackAfterId') ?? '').trim();
+    const customDays = String(fd.get('customDays') ?? '')
+      .split(',')
+      .filter(Boolean)
+      .map(Number)
+      .filter((d) => d >= 1 && d <= 7);
+    const timesPerWeek = Number(fd.get('timesPerWeek') ?? 3);
+    const reminderEnabled = fd.get('reminderEnabled') === 'on';
+    const reminderTime = String(fd.get('reminderTime') ?? '09:00');
+    const reminderDays = String(fd.get('reminderDays') ?? '')
+      .split(',')
+      .filter(Boolean)
+      .map(Number)
+      .filter((d) => d >= 1 && d <= 7);
+    const color = String(fd.get('color') ?? '').trim();
+    const microPlanB = String(fd.get('microPlanB') ?? '').trim();
+    const description = String(fd.get('description') ?? '').trim();
 
     const payload: CreateHabitInput = {
       title,
@@ -478,10 +900,19 @@ export function bindHabitFormModal(
       planB: String(fd.get('planB') ?? '').trim() || 'Минимум 2 мин',
       energyCost: energyCostNum === 1 || energyCostNum === 3 ? energyCostNum : 2,
       masteryTargetDays: masteryNum === 30 || masteryNum === 90 ? masteryNum : 60,
-      schedule: { type: schedType },
+      schedule:
+        schedType === 'custom'
+          ? { type: 'custom', daysOfWeek: customDays }
+          : schedType === 'times_per_week'
+            ? { type: 'times_per_week', timesPerWeek: Math.min(7, Math.max(1, timesPerWeek)) }
+            : { type: schedType },
       keystone: fd.get('keystone') === 'on',
       incognito: fd.get('incognito') === 'on',
       capsule: String(fd.get('capsule') ?? '').trim(),
+      ...(microPlanB ? { microPlanB } : {}),
+      ...(description ? { description } : {}),
+      ...(color ? { color } : {}),
+      ...(reminderEnabled ? { reminder: { time: reminderTime, days: reminderDays, enabled: true } } : {}),
       ...(chosenType === 'counter'
         ? {
             targetValue: Math.max(1, Number(fd.get('targetValue') ?? 8)),
@@ -500,11 +931,15 @@ export function bindHabitFormModal(
     if (habitId) {
       storage.updateHabit(habitId, payload);
       telegram.hapticNotification('success');
+      clearDraft();
+      showSavedBadge();
       modalManager.close();
       onSaved('Привычка обновлена ✓');
     } else {
       storage.addHabit(payload);
       telegram.hapticNotification('success');
+      clearDraft();
+      showSavedBadge();
       modalManager.close();
       onSaved('Привычка добавлена ✨');
     }

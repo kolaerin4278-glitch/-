@@ -75,7 +75,8 @@ export const SCHEDULE_TYPES = Object.freeze({
   DAILY: 'daily',
   WEEKDAYS: 'weekdays',
   WEEKENDS: 'weekends',
-  CUSTOM: 'custom'
+  CUSTOM: 'custom',
+  TIMES_PER_WEEK: 'times_per_week'
 } as const);
 
 export const MILESTONES = Object.freeze([7, 10, 14, 21, 30, 50, 60, 90, 100, 180, 365] as const);
@@ -92,6 +93,7 @@ export const MAX_HABIT_TITLE_LEN = 100 as const;
 export const MAX_TRIGGER_LEN = 200 as const;
 export const MAX_NORM_LEN = 50 as const;
 export const MAX_CAPSULE_LEN = 500 as const;
+export const MAX_HABIT_DESCRIPTION_LEN = 1000 as const;
 export const MAX_RITUAL_STEPS = 20 as const;
 export const MIN_STEP_MINUTES = 1 as const;
 export const MAX_STEP_MINUTES = 120 as const;

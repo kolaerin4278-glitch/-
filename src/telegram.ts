@@ -40,6 +40,11 @@ interface TelegramWebApp {
   isExpanded: boolean;
   onEvent?: (eventType: string, callback: () => void) => void;
   shareToStory?: (mediaUrl: string, params?: { text?: string }) => void;
+  showPopup?: (params: {
+    title?: string;
+    message: string;
+    buttons?: Array<{ id?: string; text?: string; type?: 'default' | 'ok' | 'cancel'; url?: string }>;
+  }) => void;
   BackButton: {
     show: () => void;
     hide: () => void;
@@ -282,6 +287,34 @@ class TelegramWebAppWrapper {
     if (!this.tg?.shareToStory) return false;
     try {
       this.tg.shareToStory(mediaUrl, caption ? { text: caption } : undefined);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Показывает нативный попап Telegram (п. 0315).
+   * Возвращает `true`, если попап был показан.
+   */
+  showPopup(params: {
+    title?: string;
+    message: string;
+    buttons?: ReadonlyArray<{ id?: string; text?: string; type?: 'default' | 'ok' | 'cancel'; url?: string }>;
+  }): boolean {
+    if (!this.tg?.showPopup || !this.isAvailable()) return false;
+    try {
+      const buttons = (params.buttons ?? [{ type: 'ok', text: 'OK' }]).map((b) => ({
+        id: b.id,
+        text: b.text,
+        type: b.type,
+        url: b.url
+      }));
+      this.tg.showPopup({
+        title: params.title,
+        message: params.message,
+        buttons
+      });
       return true;
     } catch {
       return false;
