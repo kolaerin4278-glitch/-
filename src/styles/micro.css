@@ -1,0 +1,216 @@
+@layer micro {
+  /* Тактильный визуальный отклик на нажатие (визуальный аналог haptics) */
+
+  .tap-feedback {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tap-feedback::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--accent) 32%, transparent) 0%,
+      transparent 70%
+    );
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .tap-feedback.is-tapping::after {
+    animation: tapRipple 0.52s ease-out;
+  }
+
+  @keyframes tapRipple {
+    0% {
+      width: 0;
+      height: 0;
+      opacity: 0.55;
+    }
+    100% {
+      width: 220px;
+      height: 220px;
+      opacity: 0;
+    }
+  }
+
+  /* «Подпрыгивание» кнопки при успешном действии */
+  .success-bounce {
+    animation: successBounce 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes successBounce {
+    0% {
+      transform: scale(1);
+    }
+    35% {
+      transform: scale(1.14);
+    }
+    65% {
+      transform: scale(0.97);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* Пружинное «защёлкивание» при переключении тумблера */
+  .toggle-snap {
+    animation: toggleSnap 0.32s var(--spring);
+  }
+
+  @keyframes toggleSnap {
+    0% {
+      transform: scaleX(1);
+    }
+    45% {
+      transform: scaleX(1.18);
+    }
+    100% {
+      transform: scaleX(1);
+    }
+  }
+
+  /* Мягкое появление элемента с увеличением (для бейджей и счётчиков) */
+  .badge-pop {
+    animation: badgePop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes badgePop {
+    0% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.12);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Горизонтальное «дыхание» для полосы прогресса */
+  .progress-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-shimmer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.28) 50%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    animation: shimmer 2.4s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    55%,
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Пульсация «костра» — индикатор активности серии */
+  .campfire-pulse {
+    animation: campfirePulse 3.2s ease-in-out infinite;
+  }
+
+  @keyframes campfirePulse {
+    0%,
+    100% {
+      filter: brightness(1);
+      transform: scale(1);
+    }
+    50% {
+      filter: brightness(1.18);
+      transform: scale(1.05);
+    }
+  }
+
+  /* Появление счётчика с «подсветкой» значения */
+  .count-up {
+    animation: countUpGlow 0.6s ease-out;
+  }
+
+  @keyframes countUpGlow {
+    0% {
+      text-shadow: 0 0 0 transparent;
+      transform: scale(0.94);
+    }
+    40% {
+      text-shadow: 0 0 18px var(--accent-glow);
+      transform: scale(1.06);
+    }
+    100% {
+      text-shadow: 0 0 0 transparent;
+      transform: scale(1);
+    }
+  }
+
+  /* Ошибка / отклонение — мягкое покачивание */
+  .error-shake {
+    animation: errorShake 0.36s ease-in-out;
+  }
+
+  @keyframes errorShake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-5px);
+    }
+    40% {
+      transform: translateX(5px);
+    }
+    60% {
+      transform: translateX(-3px);
+    }
+    80% {
+      transform: translateX(2px);
+    }
+  }
+
+  /* Переключение видимости с раскрытием по вертикали */
+  .expand-in {
+    animation: expandIn 0.3s var(--ease-out-soft);
+  }
+
+  @keyframes expandIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 480px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tap-feedback::after,
+    .progress-shimmer::before {
+      animation: none;
+    }
+  }
+}

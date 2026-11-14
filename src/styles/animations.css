@@ -9,7 +9,9 @@
 
   .stagger-item {
     animation: slideUpCard 0.34s var(--spring) both;
-    animation-delay: calc(min(var(--stagger-idx, 0), 8) * 38ms);
+    animation-delay: calc(
+      var(--stagger-delay, 0ms) + var(--stagger-idx, 0) * var(--stagger-step, 38ms)
+    );
   }
 
   .breathing-active {

@@ -22,6 +22,158 @@
     display: none;
   }
 
+  /* ==================== НОВЫЕ ЭЛЕМЕНТЫ ВОЛНЫ 04 ==================== */
+
+  /* Скроллер дат: лента 14 дней */
+  .date-snap-track {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    padding: 2px 0 8px;
+  }
+
+  .date-snap-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .date-snap-cell {
+    scroll-snap-align: center;
+    min-width: 54px;
+    padding: 8px 6px;
+    border-radius: var(--radius-md);
+    background: var(--glass-surface-1);
+    border: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    transition: transform 0.2s var(--spring), border-color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .date-snap-cell.active {
+    background: var(--accent);
+    color: var(--text-inverse, #fff);
+    border-color: transparent;
+    transform: translateY(-2px);
+  }
+
+  .date-snap-cell.today .date-snap-day {
+    font-weight: 800;
+  }
+
+  .date-snap-weekday {
+    font-size: 11px;
+    opacity: 0.7;
+  }
+
+  .date-snap-day {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .date-snap-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: transparent;
+  }
+
+  .date-snap-dot.done {
+    background: var(--accent);
+  }
+
+  /* Ручка перетаскивания карточки */
+  .habit-drag-handle {
+    color: var(--text-tertiary);
+    font-size: 18px;
+    cursor: grab;
+    touch-action: none;
+    opacity: 0.6;
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  .habit-drag-handle:active {
+    cursor: grabbing;
+  }
+
+  /* Состояния drag-and-drop */
+  .habit-swipe-wrapper.dragging {
+    opacity: 0.4;
+    transform: scale(0.97);
+  }
+
+  .habit-swipe-wrapper.drag-over .habit-card {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+  }
+
+  /* Индикатор связи Habit Stack */
+  .habit-stack-link {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--glass-surface-2);
+    border-radius: var(--radius-sm);
+    padding: 2px 8px;
+  }
+
+  .habit-list {
+    position: relative;
+  }
+
+  /* Шаги ритуала */
+  .ritual-step-row {
+    align-items: end;
+    gap: 10px;
+  }
+
+  .ritual-step-line {
+    font-size: var(--text-body);
+    color: var(--text-secondary);
+    padding: 4px 0;
+    list-style: none;
+  }
+
+  .ritual-steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 10px;
+  }
+
+  .ritual-player-card {
+    border-color: var(--accent);
+  }
+
+  .ritual-player-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+
+  .ritual-player-step {
+    font-size: var(--text-body);
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .ritual-timer-digits {
+    font-size: 42px;
+    font-weight: 800;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 2px;
+    margin: 8px 0 14px;
+    color: var(--text-primary);
+  }
+
   .date-chip {
     scroll-snap-align: center;
     min-width: 62px;

@@ -1,0 +1,90 @@
+@layer density {
+  /* Адаптивная плотность интерфейса (Refactoring UI, Apple HIG) */
+  
+  /* Комфортный режим — больше воздуха, меньше риск случайных нажатий */
+  [data-density="comfortable"] {
+    --card-pad: 18px;
+    --card-gap: 14px;
+    --space-internal: 14px;
+  }
+
+  [data-density="comfortable"] .habit-card {
+    padding: var(--card-pad);
+    min-height: 92px;
+  }
+
+  [data-density="comfortable"] .section-card {
+    padding: 18px;
+  }
+
+  [data-density="comfortable"] .energy-tab {
+    min-height: 50px;
+    min-width: 50px;
+  }
+
+  [data-density="comfortable"] .habit-action-btn {
+    min-width: 72px;
+    min-height: 42px;
+    font-size: 0.875rem;
+  }
+
+  /* Компактный режим — больше информации на экране */
+  [data-density="compact"] {
+    --card-pad: 12px;
+    --card-gap: 8px;
+    --space-internal: 10px;
+  }
+
+  [data-density="compact"] .habit-card {
+    padding: 12px;
+    min-height: 72px;
+  }
+
+  [data-density="compact"] .section-card {
+    padding: 12px;
+  }
+
+  [data-density="compact"] .energy-tab {
+    min-height: 42px;
+    min-width: 42px;
+  }
+
+  [data-density="compact"] .habit-action-btn {
+    min-width: 64px;
+    min-height: 38px;
+    font-size: 0.8125rem;
+  }
+
+  [data-density="compact"] .habit-title {
+    font-size: 0.9375rem;
+  }
+
+  [data-density="compact"] .date-chip {
+    min-width: 56px;
+    min-height: 52px;
+    padding: 6px;
+  }
+
+  /* Адаптация под размер экрана */
+  @media (max-width: 360px) {
+    [data-density="comfortable"] {
+      --card-pad: 14px;
+      --card-gap: 10px;
+    }
+
+    [data-density="comfortable"] .habit-card {
+      min-height: 80px;
+    }
+  }
+
+  @media (min-width: 600px) {
+    [data-density="comfortable"] {
+      --card-pad: 20px;
+      --card-gap: 16px;
+    }
+
+    [data-density="comfortable"] .habit-card {
+      min-height: 96px;
+    }
+  }
+}

@@ -1,0 +1,484 @@
+@layer components {
+  /* ==================== АРХИВ И КОРЗИНА ==================== */
+  
+  .archive-view,
+  .trash-view {
+    padding: var(--space-4) var(--space-3);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .archive-header,
+  .trash-header {
+    margin-bottom: var(--space-4);
+  }
+
+  .archive-title,
+  .trash-title {
+    font-size: var(--text-h1);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
+  }
+
+  .archive-subtitle,
+  .trash-subtitle {
+    font-size: var(--text-caption);
+    color: var(--text-secondary);
+  }
+
+  /* Пустое состояние */
+  .archive-empty-state,
+  .trash-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 360px;
+    text-align: center;
+    padding: var(--space-8);
+  }
+
+  .empty-state-icon {
+    font-size: 64px;
+    margin-bottom: var(--space-4);
+    opacity: 0.5;
+    filter: grayscale(0.3);
+  }
+
+  .empty-state-title {
+    font-size: var(--text-h1);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+  }
+
+  .empty-state-text {
+    font-size: var(--text-body);
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 320px;
+  }
+
+  /* Архивированные карточки */
+  .archive-list,
+  .trash-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .archived-habit-card,
+  .deleted-habit-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--glass-surface-1);
+    backdrop-filter: blur(24px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    transition: transform 0.2s var(--spring), border-color 0.2s ease;
+  }
+
+  .archived-habit-card:hover,
+  .deleted-habit-card:hover {
+    border-color: var(--glass-border-strong);
+  }
+
+  .archived-habit-card:active,
+  .deleted-habit-card:active {
+    transform: scale(0.98);
+  }
+
+  .archived-habit-icon,
+  .deleted-habit-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: var(--glass-surface-2);
+  }
+
+  .deleted-habit-icon--faded {
+    opacity: 0.5;
+    filter: grayscale(0.8);
+  }
+
+  .archived-habit-info,
+  .deleted-habit-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .archived-habit-title,
+  .deleted-habit-title {
+    font-size: var(--text-body);
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .deleted-habit-title {
+    opacity: 0.7;
+  }
+
+  .archived-habit-meta,
+  .deleted-habit-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-caption);
+    color: var(--text-secondary);
+  }
+
+  .archived-habit-sphere,
+  .deleted-habit-sphere {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--glass-surface-2);
+    font-size: var(--text-micro);
+    font-weight: 500;
+  }
+
+  .archived-habit-date {
+    font-size: var(--text-micro);
+  }
+
+  .deleted-habit-expiry {
+    font-size: var(--text-micro);
+    color: var(--text-tertiary);
+  }
+
+  .deleted-habit-expiry--urgent {
+    color: var(--coral);
+    font-weight: 500;
+  }
+
+  /* Кнопки восстановления и удаления */
+  .archived-habit-restore-btn,
+  .deleted-habit-action-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--glass-surface-2);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: transform 0.2s var(--spring), background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .archived-habit-restore-btn:hover,
+  .deleted-habit-action-btn:hover {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.05);
+  }
+
+  .archived-habit-restore-btn:active,
+  .deleted-habit-action-btn:active {
+    transform: scale(0.95);
+  }
+
+  .deleted-habit-actions {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .deleted-habit-action-btn--danger:hover {
+    background: var(--coral);
+    color: white;
+  }
+
+  /* Футер корзины */
+  .trash-footer {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: center;
+  }
+
+  .trash-empty-all-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    background: var(--glass-surface-1);
+    backdrop-filter: blur(24px);
+    color: var(--coral);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s var(--spring), background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .trash-empty-all-btn:hover {
+    background: var(--coral);
+    color: white;
+    border-color: var(--coral);
+    transform: translateY(-1px);
+  }
+
+  .trash-empty-all-btn:active {
+    transform: scale(0.97);
+  }
+
+  .trash-empty-all-btn svg {
+    flex-shrink: 0;
+  }
+
+  /* ==================== ИНДИКАТОР АРХИВА ==================== */
+  
+  .archive-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    margin-top: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px dashed var(--glass-border);
+    border-radius: var(--radius-lg);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s var(--spring), border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .archive-indicator:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+  }
+
+  .archive-indicator:active {
+    transform: scale(0.98);
+  }
+
+  .archive-indicator-icon {
+    font-size: 20px;
+  }
+
+  .archive-indicator-label {
+    flex: 1;
+    text-align: left;
+  }
+
+  .archive-indicator-arrow {
+    font-size: 20px;
+    opacity: 0.6;
+  }
+
+  /* ==================== ПРОФИЛЬ ==================== */
+  
+  .profile-view {
+    padding: var(--space-4) var(--space-3);
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .profile-hero {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+  }
+
+  .profile-hero-avatar {
+    font-size: 44px;
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--glass-surface-2);
+  }
+
+  .profile-hero-stats {
+    flex: 1;
+    display: flex;
+    justify-content: space-around;
+    gap: var(--space-2);
+  }
+
+  .profile-hero-stat {
+    text-align: center;
+  }
+
+  .profile-hero-stat-value {
+    font-size: var(--text-h1);
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.1;
+  }
+
+  .profile-hero-stat-label {
+    font-size: var(--text-micro);
+    color: var(--text-secondary);
+    margin-top: var(--space-1);
+  }
+
+  .profile-section-title {
+    font-size: var(--text-caption);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-3);
+  }
+
+  .profile-spheres {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
+  }
+
+  .profile-sphere {
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    background: var(--glass-surface-1);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    border-left: 3px solid var(--sphere-color, var(--accent));
+    box-shadow: 0 0 20px -8px var(--sphere-glow, transparent);
+    transition: transform 0.2s var(--spring);
+  }
+
+  .profile-sphere:hover {
+    transform: translateY(-2px);
+  }
+
+  .profile-sphere-count {
+    font-size: var(--text-h1);
+    font-weight: 600;
+    color: var(--sphere-color, var(--text-primary));
+    line-height: 1.1;
+  }
+
+  .profile-sphere-name {
+    font-size: var(--text-caption);
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-top: var(--space-1);
+  }
+
+  .profile-sphere-badge {
+    font-size: var(--text-micro);
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+
+  .profile-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .profile-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    background: var(--glass-surface-1);
+    backdrop-filter: blur(24px);
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.2s var(--spring), border-color 0.2s ease;
+  }
+
+  .profile-link:hover {
+    border-color: var(--glass-border-strong);
+  }
+
+  .profile-link:active {
+    transform: scale(0.98);
+  }
+
+  .profile-link-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .profile-link-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .profile-link-title {
+    font-size: var(--text-body);
+    font-weight: 500;
+  }
+
+  .profile-link-subtitle {
+    font-size: var(--text-micro);
+    color: var(--text-tertiary);
+  }
+
+  .profile-link-count {
+    font-size: var(--text-caption);
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 2px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--glass-surface-2);
+  }
+
+  .profile-link-arrow {
+    font-size: 22px;
+    color: var(--text-tertiary);
+  }
+
+  .page-placeholder {
+    padding: var(--space-8);
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: var(--text-body);
+  }
+
+  /* ==================== ЛИНИЯ СВЯЗИ (HABIT STACK) ==================== */
+  
+  .stack-connector {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .stack-connector-path {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 4 5;
+    opacity: 0.55;
+    filter: drop-shadow(0 0 4px var(--accent-glow));
+  }
+}
+

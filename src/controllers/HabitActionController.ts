@@ -1,6 +1,5 @@
 import { STATUS } from '../constants';
 import { eventBus } from '../core/event-bus';
-import { logger } from '../core/logger';
 import { storage } from '../storage';
 import { telegram } from '../telegram';
 import { islandManager } from '../ui/island';
@@ -82,7 +81,12 @@ export class HabitActionController {
     telegram.haptic('light');
     islandManager.show({
       message: 'Пропуск записан. Восстановись.',
-      icon: '🔄'
+      icon: '🔄',
+      undoLabel: 'Отменить',
+      onUndo: () => {
+        if (prev) storage.setCheck(habitId, today, prev);
+        else storage.clearCheck(habitId, today);
+      }
     });
   }
 }

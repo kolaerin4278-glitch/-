@@ -2,6 +2,7 @@ import { storage } from '../storage';
 import { getPeriodDateKeys, getTodayKey } from '../date';
 import { STATUS } from '../constants';
 import { escapeHtml } from '../utils';
+import { getMasteryHTML } from './MasteryView';
 
 export function getAnalyticsHTML(): string {
   const habits = storage.getHabits();
@@ -94,6 +95,9 @@ export function getAnalyticsHTML(): string {
           <span><i class="dot high"></i> Норма</span>
         </div>
       </div>
+
+      <h3 class="section-title">Полка мастерства</h3>
+      ${getMasteryHTML()}
     </div>
   `;
 }

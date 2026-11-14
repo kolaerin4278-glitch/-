@@ -1,10 +1,15 @@
-@layer tokens, base, aurora, surfaces, layout, components, animations, themes, print;
+@layer tokens, base, typography, grid, density, aurora, surfaces, layout, components, micro, animations, lifecycle, themes, print;
 
 @import './tokens.css';
 @import './base.css';
+@import './typography.css';
+@import './grid.css';
+@import './density.css';
 @import './aurora.css';
 @import './surfaces.css';
 @import './layout.css';
 @import './components.css';
+@import './micro.css';
 @import './animations.css';
+@import './lifecycle.css';
 @import './themes.css';

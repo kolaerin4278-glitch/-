@@ -1,0 +1,219 @@
+@layer typography {
+  /* Модульная адаптивная типографика с clamp() — плавное масштабирование между устройствами */
+  
+  body {
+    font-family: var(--font-system);
+    font-size: var(--text-body);
+    line-height: 1.5;
+    font-variant-numeric: normal;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Заголовки с отрицательным трекингом для оптической коррекции */
+  h1,
+  .text-display {
+    font-size: var(--text-display);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.6em;
+  }
+
+  h2,
+  .text-h1 {
+    font-size: var(--text-h1);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.018em;
+    margin-bottom: 0.5em;
+  }
+
+  h3,
+  .text-h2 {
+    font-size: var(--text-h2);
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.5em;
+  }
+
+  /* Основной текст с комфортным межстрочным интервалом */
+  p,
+  .text-body {
+    font-size: var(--text-body);
+    line-height: 1.55;
+    margin-bottom: 1em;
+  }
+
+  .text-caption {
+    font-size: var(--text-caption);
+    line-height: 1.45;
+    color: var(--text-secondary);
+  }
+
+  .text-micro {
+    font-size: var(--text-micro);
+    line-height: 1.4;
+    color: var(--text-tertiary);
+  }
+
+  /* Моноширинные цифры для счетчиков и таймеров */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Оптимизация для таймеров, счетчиков и метрик */
+  .habit-counter,
+  .campfire-pct,
+  .pip-digits,
+  .timer-display,
+  .streak-count,
+  .date-chip-day {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Вертикальный ритм базовой линии 8px */
+  .rhythm-container > * + * {
+    margin-top: var(--space-4);
+  }
+
+  .rhythm-tight > * + * {
+    margin-top: var(--space-2);
+  }
+
+  /* Стиль для длинного текста (капсулы, заметки) */
+  .longform-text {
+    line-height: 1.65;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
+
+  .longform-text p + p {
+    margin-top: 0.75em;
+  }
+
+  /* Ограничение ширины для читаемости */
+  .reading-width {
+    max-width: 68ch;
+  }
+
+  /* Полужирный текст */
+  strong,
+  .font-bold {
+    font-weight: 700;
+  }
+
+  /* Семибольд для среднего акцента */
+  .font-semibold {
+    font-weight: 600;
+  }
+
+  /* Моноширинный код */
+  code,
+  .text-mono {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    padding: 0.125em 0.35em;
+    border-radius: 4px;
+    background: var(--glass-surface-2);
+  }
+
+  /* Переполнение текста с многоточием */
+  .text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Многострочное обрезание текста (2 строки) */
+  .text-clamp-2 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  /* Многострочное обрезание текста (3 строки) */
+  .text-clamp-3 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+
+  /* Выравнивание текста */
+  .text-left {
+    text-align: left;
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+
+  /* Цветовые варианты текста */
+  .text-primary {
+    color: var(--text-primary);
+  }
+
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+
+  .text-tertiary {
+    color: var(--text-tertiary);
+  }
+
+  .text-accent {
+    color: var(--accent);
+  }
+
+  .text-emerald {
+    color: var(--emerald);
+  }
+
+  .text-amber {
+    color: var(--amber);
+  }
+
+  .text-coral {
+    color: var(--coral);
+  }
+
+  /* Адаптация к масштабированию текста в браузере (WCAG 1.4.4) */
+  @media (max-width: 400px) {
+    :root {
+      --text-display: clamp(1.35rem, 3.5vw, 1.75rem);
+      --text-h1: clamp(1.125rem, 2.8vw, 1.35rem);
+    }
+  }
+
+  /* Увеличение отступов в режиме 400% масштабирования (WCAG 1.4.10) */
+  @media screen and (min-width: 1280px) {
+    html {
+      font-size: 18px;
+    }
+  }
+
+  /* Адаптация под масштаб шрифта из настроек */
+  [data-font-scale="sm"] body {
+    font-size: calc(0.9375rem * 0.92);
+  }
+
+  [data-font-scale="lg"] body {
+    font-size: calc(0.9375rem * 1.1);
+  }
+
+  [data-font-scale="lg"] .text-display {
+    font-size: clamp(1.65rem, 4.2vw, 2rem);
+  }
+}

@@ -1,4 +1,11 @@
 import { lifecycle } from '../core/lifecycle';
+import { createSpring, type SpringOptions } from '../animations/spring';
+
+/**
+ * Обратно совместимый слой над общей реализацией пружинной физики
+ * (`src/animations/spring.ts`). Единственный источник правды по пружинам —
+ * модуль `animations/spring`; здесь сохранён прежний публичный API.
+ */
 
 export interface SpringConfig {
   readonly stiffness?: number;
@@ -8,7 +15,7 @@ export interface SpringConfig {
 }
 
 /**
- * Пружинный интегратор (Spring Physics) для плавных естественных переходов
+ * Запускает пружинную анимацию. Возвращает функцию отмены.
  */
 export function animateSpring(
   from: number,
@@ -17,51 +24,8 @@ export function animateSpring(
   onComplete?: () => void,
   config: SpringConfig = {}
 ): () => void {
-  if (lifecycle.prefersReducedMotion() || typeof requestAnimationFrame === 'undefined') {
-    onUpdate(to);
-    onComplete?.();
-    return () => undefined;
-  }
-
-  const stiffness = config.stiffness ?? 260;
-  const damping = config.damping ?? 24;
-  const mass = config.mass ?? 1;
-  const precision = config.precision ?? 0.01;
-
-  let position = from;
-  let velocity = 0;
-  let lastTime = performance.now();
-  let rafId: number | null = null;
-  let cancelled = false;
-
-  const step = (now: number): void => {
-    if (cancelled) return;
-    const dt = Math.min(0.032, Math.max(0.001, (now - lastTime) / 1000));
-    lastTime = now;
-
-    const force = -stiffness * (position - to);
-    const dampForce = -damping * velocity;
-    const accel = (force + dampForce) / mass;
-
-    velocity += accel * dt;
-    position += velocity * dt;
-
-    if (Math.abs(velocity) < precision && Math.abs(position - to) < precision) {
-      onUpdate(to);
-      onComplete?.();
-      return;
-    }
-
-    onUpdate(position);
-    rafId = requestAnimationFrame(step);
-  };
-
-  rafId = requestAnimationFrame(step);
-
-  return () => {
-    cancelled = true;
-    if (rafId !== null) cancelAnimationFrame(rafId);
-  };
+  const handle = createSpring(from, to, onUpdate, onComplete, config as SpringOptions);
+  return () => handle.stop();
 }
 
 /**
