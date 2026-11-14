@@ -1206,6 +1206,79 @@
     font-weight: 900;
   }
 
+  /* Тепловая карта активности (п. 0385) */
+  .heatmap-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(53, 1fr);
+    grid-auto-rows: 12px;
+    gap: 3px;
+    padding: 8px;
+    background: var(--glass-surface-1);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    overflow-x: auto;
+  }
+
+  .heatmap-cell {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--glass-surface-2);
+    transition: transform 0.15s ease;
+  }
+
+  .heatmap-cell:hover {
+    transform: scale(1.3);
+    z-index: 1;
+  }
+
+  .heatmap-cell[data-level="0"] {
+    background: var(--glass-surface-2);
+  }
+
+  .heatmap-cell[data-level="1"] {
+    background: rgba(52, 211, 153, 0.3);
+  }
+
+  .heatmap-cell[data-level="2"] {
+    background: rgba(52, 211, 153, 0.5);
+  }
+
+  .heatmap-cell[data-level="3"] {
+    background: rgba(52, 211, 153, 0.75);
+  }
+
+  .heatmap-cell[data-level="4"] {
+    background: var(--emerald);
+  }
+
+  .heatmap-row-end {
+    display: none;
+  }
+
+  .heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--text-micro);
+    color: var(--text-secondary);
+    padding: 0 8px;
+  }
+
+  .heatmap-summary {
+    text-align: center;
+    font-size: var(--text-micro);
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+
   .toggle-check-row {
     display: flex;
     align-items: center;
