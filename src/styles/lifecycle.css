@@ -2,6 +2,32 @@
   /* ==================== АРХИВ И КОРЗИНА ==================== */
   
   .archive-view,
+  /* Динамический фон корзины — холодный, «неактивный» оттенок (п. 0393) */
+  .page-subpage--trash {
+    background:
+      radial-gradient(circle at 15% 12%, rgba(148, 163, 184, 0.12), transparent 45%),
+      radial-gradient(circle at 85% 78%, rgba(100, 116, 139, 0.1), transparent 42%);
+    min-height: 100vh;
+  }
+
+  .page-subpage--archive {
+    background:
+      radial-gradient(circle at 20% 20%, rgba(167, 139, 250, 0.08), transparent 45%);
+    min-height: 100vh;
+  }
+
+  .trash-readonly-banner {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--glass-surface-2);
+    border: 1px solid var(--glass-border-strong);
+    color: var(--text-secondary);
+    font-size: var(--text-micro);
+    font-weight: 600;
+  }
+
   .trash-view {
     padding: var(--space-4) var(--space-3);
     max-width: 640px;

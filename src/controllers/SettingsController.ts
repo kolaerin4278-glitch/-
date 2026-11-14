@@ -11,6 +11,36 @@ export class SettingsController {
     const exportBtn = container.querySelector<HTMLButtonElement>('#exportJsonBtn');
     const importBtn = container.querySelector<HTMLButtonElement>('#importJsonBtn');
     const resetBtn = container.querySelector<HTMLButtonElement>('#resetDataBtn');
+    const trashRetentionSelect = container.querySelector<HTMLSelectElement>('#trashRetentionSelect');
+    const trashReadOnlyCheck = container.querySelector<HTMLInputElement>('#trashReadOnlyCheck');
+
+    // Настройка периода хранения в корзине (п. 0378)
+    trashRetentionSelect?.addEventListener(
+      'change',
+      () => {
+        const days = parseInt(trashRetentionSelect.value, 10);
+        if (!isNaN(days) && days > 0) {
+          storage.updateSettings({ trashRetentionDays: days });
+          islandManager.show({ message: `Корзина: ${days} дн.`, icon: '🗑️' });
+          onUpdate();
+        }
+      },
+      { signal }
+    );
+
+    // Режим «только чтение» для корзины (п. 0376)
+    trashReadOnlyCheck?.addEventListener(
+      'change',
+      () => {
+        storage.updateSettings({ trashReadOnly: trashReadOnlyCheck.checked });
+        islandManager.show({
+          message: trashReadOnlyCheck.checked ? 'Корзина только для чтения' : 'Корзина: обычный режим',
+          icon: '🔒'
+        });
+        onUpdate();
+      },
+      { signal }
+    );
 
     dayBoundarySelect?.addEventListener(
       'change',

@@ -16,7 +16,7 @@ import { drawStackLine } from './animations/lifecycle';
 import { telegram } from './telegram';
 import { modalManager } from './ui/modal';
 import { islandManager } from './ui/island';
-import { animationManager, applyStagger, animateRestoreOut } from './animations';
+import { animationManager, applyStagger, animateRestoreOut, animateCountUp } from './animations';
 
 async function bootstrap() {
   await storage.whenReady();
@@ -104,7 +104,8 @@ async function bootstrap() {
     const pageTitle = getPageTitle(currentPage);
     const pageContent = renderPageContent(currentPage);
     const showAddBtn = currentPage === 'today';
-    
+    const isSubPage = currentPage === 'archive' || currentPage === 'trash';
+
     app!.innerHTML = `
       <header class="ios-fixed-header">
         <div class="header-content">
@@ -112,7 +113,7 @@ async function bootstrap() {
           ${showAddBtn ? '<button id="addHabitBtn" class="header-add-btn">＋</button>' : ''}
         </div>
       </header>
-      <main id="mainContent">${pageContent}</main>
+      <main id="mainContent" class="${isSubPage ? 'page-subpage page-subpage--${currentPage}' : ''}">${pageContent}</main>
       <nav class="ios-island-navbar">
         <button class="nav-tab-btn ${currentPage === 'today' ? 'active' : ''}" data-page="today">Дневник</button>
         <button class="nav-tab-btn ${currentPage === 'stats' ? 'active' : ''}" data-page="stats">Аналитика</button>
@@ -121,6 +122,16 @@ async function bootstrap() {
       <div id="dynamicIsland" class="dynamic-island"></div>
       <div id="confettiCanvas"></div>
     `;
+
+    // Кнопка «Назад» Telegram в корзине и архиве (п. 0395)
+    if (isSubPage) {
+      telegram.showBackButton(() => {
+        currentPage = 'today';
+        render();
+      });
+    } else {
+      telegram.hideBackButton();
+    }
 
     // Swipe gestures — только для страницы «Дневник»
     if (currentPage === 'today') {
@@ -291,6 +302,14 @@ async function bootstrap() {
     if (settingsRoot) {
       const ctrl = new AbortController();
       SettingsController.bind(settingsRoot, ctrl.signal, () => render());
+    }
+
+    // Пружинная анимация счётчиков в профиле (п. 0396)
+    if (currentPage === 'profile') {
+      document.querySelectorAll<HTMLElement>('[data-count-value]').forEach((el) => {
+        const target = Number(el.dataset['countValue'] ?? '0');
+        animateCountUp(el, target);
+      });
     }
 
     // Контекстное меню привычки — по долгому нажатию на карточку

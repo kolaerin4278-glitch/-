@@ -31,15 +31,15 @@ export function renderProfileView(): string {
         <div class="profile-hero-avatar">🧘</div>
         <div class="profile-hero-stats">
           <div class="profile-hero-stat">
-            <div class="profile-hero-stat-value">${active.length}</div>
+            <div class="profile-hero-stat-value" data-count-value="${active.length}">0</div>
             <div class="profile-hero-stat-label">активных</div>
           </div>
           <div class="profile-hero-stat">
-            <div class="profile-hero-stat-value">${totalChecks}</div>
+            <div class="profile-hero-stat-value" data-count-value="${totalChecks}">0</div>
             <div class="profile-hero-stat-label">отметок</div>
           </div>
           <div class="profile-hero-stat">
-            <div class="profile-hero-stat-value">${archived.length}</div>
+            <div class="profile-hero-stat-value" data-count-value="${archived.length}">0</div>
             <div class="profile-hero-stat-label">в архиве</div>
           </div>
         </div>
@@ -60,6 +60,11 @@ export function renderProfileView(): string {
             `;
           }).join('')}
         </div>
+      </section>
+
+      <section class="profile-section">
+        <h2 class="profile-section-title">Карта активности</h2>
+        ${renderHeatmap(state.checks)}
       </section>
 
       <section class="profile-section">
@@ -108,6 +113,60 @@ export function renderProfileView(): string {
       </section>
     </div>
   `;
+}
+
+/**
+ * Интерактивная тепловая карта выполнения привычек (п. 0385).
+ * Показывает активность за последние 26 недель в стиле GitHub Contributions.
+ */
+function renderHeatmap(checks: ReadonlyMap<string, import('../core/types').Check>): string {
+  const DAYS = 26 * 7;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Считаем выполнения по каждой дате
+  const counts = new Map<string, number>();
+  for (const check of checks.values()) {
+    if (check.status !== 'full' && check.status !== 'plan_b') continue;
+    counts.set(check.date, (counts.get(check.date) ?? 0) + 1);
+  }
+
+  const cells: string[] = [];
+  for (let i = DAYS - 1; i >= 0; i -= 1) {
+    const d = new Date(today.getTime() - i * 86_400_000);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const count = counts.get(key) ?? 0;
+    const level = count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 9 ? 3 : 4;
+    const dow = (d.getDay() + 6) % 7; // 0 = Пн
+    const title = `${d.getLocaleDateString('ru-RU')}: ${count} ${plural(count, 'выполнение', 'выполнения', 'выполнений')}`;
+    cells.push(
+      `<div class="heatmap-cell" data-level="${level}" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}"></div>`
+    );
+    if (dow === 6) cells.push('<div class="heatmap-row-end"></div>');
+  }
+
+  const totalDays = counts.size;
+  return `
+    <div class="heatmap-wrap">
+      <div class="heatmap-grid" role="img" aria-label="Тепловая карта выполнения привычек за последние 26 недель">
+        ${cells.join('')}
+      </div>
+      <div class="heatmap-legend">
+        <span>Меньше</span>
+        ${[0, 1, 2, 3, 4].map((l) => `<div class="heatmap-cell" data-level="${l}"></div>`).join('')}
+        <span>Больше</span>
+      </div>
+      <div class="heatmap-summary">Активных дней: ${totalDays}</div>
+    </div>
+  `;
+}
+
+function plural(count: number, one: string, few: string, many: string): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
 }
 
 /**

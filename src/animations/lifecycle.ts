@@ -79,6 +79,38 @@ export function animateRestoreOut(element: HTMLElement | null | undefined): void
 }
 
 /**
+ * Пружинная анимация счётчика в профиле (п. 0396).
+ * Число плавно «докручивается» до целевого значения с пружинной посадкой.
+ */
+export function animateCountUp(element: HTMLElement | null | undefined, target: number): void {
+  if (!element) return;
+
+  if (lifecycle.prefersReducedMotion()) {
+    element.textContent = String(target);
+    return;
+  }
+
+  const duration = 900;
+  const start = performance.now();
+  // Пружинная кривая с overshoot
+  const ease = (t: number): number => {
+    const c = 1.70158 * 1.1;
+    const p = t - 1;
+    return p * p * ((c + 1) * p + c) + 1;
+  };
+
+  const step = (now: number): void => {
+    const elapsed = now - start;
+    const t = Math.min(1, elapsed / duration);
+    const value = Math.round(target * ease(t));
+    element.textContent = String(value);
+    if (t < 1) requestAnimationFrame(step);
+  };
+
+  requestAnimationFrame(step);
+}
+
+/**
  * Плавная отрисовка линии связи между двумя карточками привычек (п. 0352).
  * Линия рисуется от нижнего центра первой карточки к верхнему центру второй.
  */

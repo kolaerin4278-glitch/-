@@ -31,6 +31,26 @@ export function getSettingsHTML(): string {
       </div>
 
       <div class="section-card">
+        <h3 class="section-title">Корзина</h3>
+        <div class="settings-row">
+          <span>Срок хранения (дней)</span>
+          <select id="trashRetentionSelect" class="settings-select">
+            ${[7, 14, 30, 60, 90].map(
+              (d) =>
+                `<option value="${d}" ${state.settings.trashRetentionDays === d ? 'selected' : ''}>${d}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <label class="toggle-check-row" for="trashReadOnlyCheck">
+          <div>
+            <div style="font-weight:700; color:var(--text-primary);">Только чтение</div>
+            <div class="settings-desc">Скрыть восстановление и удаление в корзине</div>
+          </div>
+          <input type="checkbox" id="trashReadOnlyCheck" ${state.settings.trashReadOnly ? 'checked' : ''}>
+        </label>
+      </div>
+
+      <div class="section-card">
         <h3 class="section-title">Данные и резервная копия</h3>
         <div class="habit-actions">
           <button type="button" class="habit-action-btn" id="exportJsonBtn">Экспорт JSON</button>

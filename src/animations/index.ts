@@ -30,6 +30,7 @@ export { animateRemove, animateFlip } from './remove';
 export {
   animateTrashIn,
   animateRestoreOut,
+  animateCountUp,
   drawStackLine,
   animateStackProgress
 } from './lifecycle';
